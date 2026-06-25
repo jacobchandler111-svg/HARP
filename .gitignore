@@ -33,6 +33,10 @@ build/
 .idea/
 *.swp
 
+# Local Claude Code settings — keep only the shared preview launch config
+.claude/*
+!.claude/launch.json
+
 # OS cruft
 .DS_Store
 Thumbs.db

@@ -13,104 +13,150 @@
       <span class="logo">HARP</span>
       <span class="tagline">Health &amp; Risk Profile</span>
     </div>
+    <div class="header-firm" id="header-firm"><!-- firm name injected from config --></div>
   </header>
 
   <main class="layout">
     <!-- ============ INPUT FORM ============ -->
     <section class="panel form-panel no-print">
       <form id="harp-form">
-        <fieldset>
-          <legend>Household</legend>
-          <div class="grid">
-            <label>Client / household name
-              <input type="text" id="name" placeholder="e.g. The Smith Family" />
-            </label>
-            <label>Annual income ($)
-              <input type="number" id="income" min="0" step="1000" placeholder="150000" />
-            </label>
-            <label>Dependents
-              <input type="number" id="dependents" min="0" step="1" placeholder="2" />
-            </label>
-          </div>
-        </fieldset>
+        <div class="client-meta">
+          <label>Client / household name
+            <input type="text" id="name" placeholder="e.g. The Smith Family" />
+          </label>
+        </div>
 
-        <fieldset>
-          <legend>Investments</legend>
-          <table class="holdings" id="holdings">
-            <thead>
-              <tr>
-                <th>Ticker</th>
-                <th>Name</th>
-                <th>Sector</th>
-                <th class="num">Value ($)</th>
-                <th aria-label="Remove"></th>
-              </tr>
-            </thead>
-            <tbody id="holdings-body"><!-- rows injected by app.js --></tbody>
-          </table>
-          <button type="button" class="link-btn" id="add-holding">+ Add holding</button>
-        </fieldset>
+        <!-- 1 · Investments & financial statements -->
+        <section class="accordion-item" data-section="investments">
+          <button type="button" class="accordion-header" aria-expanded="true">
+            <span class="chev" aria-hidden="true">▾</span>
+            <span class="acc-title">1 · Investments &amp; financial statements</span>
+          </button>
+          <div class="accordion-body">
+            <div class="dropzone" data-upload="investments">
+              <input type="file" class="dz-input" multiple accept=".pdf,.png,.jpg,.jpeg,.csv" hidden />
+              <p class="dz-text">Drag &amp; drop investment / brokerage statements here, or
+                <button type="button" class="link-btn dz-browse">browse</button></p>
+              <p class="dz-note">Automatic extraction (Gemini/OCR) arrives in Phase 2 — for now, enter values manually below.</p>
+              <ul class="dz-files"></ul>
+            </div>
 
-        <fieldset>
-          <legend>Accounts &amp; tax</legend>
-          <p class="hint">Investable assets by tax treatment.</p>
-          <div class="grid">
-            <label>Taxable ($)
-              <input type="number" id="taxable" min="0" step="1000" placeholder="0" />
-            </label>
-            <label>Tax-deferred — 401k/IRA ($)
-              <input type="number" id="taxDeferred" min="0" step="1000" placeholder="0" />
-            </label>
-            <label>Tax-free — Roth/HSA ($)
-              <input type="number" id="taxFree" min="0" step="1000" placeholder="0" />
-            </label>
-          </div>
-        </fieldset>
+            <h4 class="sub">Holdings</h4>
+            <table class="holdings" id="holdings">
+              <thead>
+                <tr><th>Ticker</th><th>Name</th><th>Sector</th><th class="num">Value ($)</th><th aria-label="Remove"></th></tr>
+              </thead>
+              <tbody id="holdings-body"><!-- rows injected by forms.js --></tbody>
+            </table>
+            <button type="button" class="link-btn" id="add-holding">+ Add holding</button>
 
-        <fieldset>
-          <legend>Insurance</legend>
-          <div class="grid">
-            <label>Life insurance coverage ($)
-              <input type="number" id="lifeCoverage" min="0" step="1000" placeholder="250000" />
-            </label>
+            <h4 class="sub">Account balances by tax treatment</h4>
+            <div class="grid">
+              <label>Taxable ($)<input type="number" id="taxable" min="0" step="1000" placeholder="0" /></label>
+              <label>Tax-deferred — 401k/IRA ($)<input type="number" id="taxDeferred" min="0" step="1000" placeholder="0" /></label>
+              <label>Tax-free — Roth/HSA ($)<input type="number" id="taxFree" min="0" step="1000" placeholder="0" /></label>
+            </div>
           </div>
-        </fieldset>
+        </section>
 
-        <fieldset>
-          <legend>Legal / estate</legend>
-          <div class="checklist">
-            <label><input type="checkbox" id="legal-will" /> Will</label>
-            <label><input type="checkbox" id="legal-poa" /> Financial power of attorney</label>
-            <label><input type="checkbox" id="legal-healthcare" /> Healthcare directive / medical POA</label>
-            <label><input type="checkbox" id="legal-beneficiaries" /> Beneficiaries reviewed (last 12 mo.)</label>
-            <label><input type="checkbox" id="legal-trust" /> Living trust (if applicable)</label>
+        <!-- 2 · 1040 / accounting statement -->
+        <section class="accordion-item" data-section="accounting">
+          <button type="button" class="accordion-header" aria-expanded="true">
+            <span class="chev" aria-hidden="true">▾</span>
+            <span class="acc-title">2 · 1040 / accounting statement</span>
+          </button>
+          <div class="accordion-body">
+            <div class="dropzone" data-upload="accounting">
+              <input type="file" class="dz-input" multiple accept=".pdf,.png,.jpg,.jpeg" hidden />
+              <p class="dz-text">Drag &amp; drop the 1040 / tax return here, or
+                <button type="button" class="link-btn dz-browse">browse</button></p>
+              <p class="dz-note">Automatic extraction arrives in Phase 2 — for now, enter values manually below.</p>
+              <ul class="dz-files"></ul>
+            </div>
+            <div class="grid">
+              <label>Filing status
+                <select id="filingStatus">
+                  <option value="">—</option>
+                  <option>Single</option>
+                  <option>Married filing jointly</option>
+                  <option>Married filing separately</option>
+                  <option>Head of household</option>
+                </select>
+              </label>
+              <label>Annual gross income ($)<input type="number" id="income" min="0" step="1000" placeholder="0" /></label>
+              <label>AGI ($)<input type="number" id="agi" min="0" step="1000" placeholder="0" /></label>
+              <label>Total tax ($)<input type="number" id="totalTax" min="0" step="500" placeholder="0" /></label>
+              <label>Dependents<input type="number" id="dependents" min="0" step="1" placeholder="0" /></label>
+            </div>
           </div>
-        </fieldset>
+        </section>
+
+        <!-- 3 · Insurance -->
+        <section class="accordion-item" data-section="insurance">
+          <button type="button" class="accordion-header" aria-expanded="true">
+            <span class="chev" aria-hidden="true">▾</span>
+            <span class="acc-title">3 · Insurance</span>
+          </button>
+          <div class="accordion-body">
+            <div class="questions">
+              <label class="q"><input type="checkbox" id="ins-employed" checked /> Currently earning income (assess disability)</label>
+              <label class="q"><input type="checkbox" id="ins-ownsHome" /> Owns a home (assess homeowners)</label>
+              <label>Home value ($)<input type="number" id="ins-homeValue" min="0" step="1000" placeholder="0" /></label>
+            </div>
+            <div class="policy-add">
+              <select id="policy-type">
+                <option value="life">Life</option>
+                <option value="disability">Disability</option>
+                <option value="property">Homeowners / property</option>
+                <option value="umbrella">Umbrella liability</option>
+              </select>
+              <button type="button" class="link-btn" id="add-policy">+ Add policy</button>
+            </div>
+            <div id="policies"><!-- policy cards injected by forms.js --></div>
+          </div>
+        </section>
+
+        <!-- 4 · Legal / estate -->
+        <section class="accordion-item" data-section="legal">
+          <button type="button" class="accordion-header" aria-expanded="true">
+            <span class="chev" aria-hidden="true">▾</span>
+            <span class="acc-title">4 · Legal / estate</span>
+          </button>
+          <div class="accordion-body">
+            <p class="hint">Check each document the household currently has in place.</p>
+            <div class="checklist" id="legal-checklist"><!-- injected from the legal engine --></div>
+          </div>
+        </section>
 
         <div class="actions">
           <button type="submit" class="primary">Assess</button>
           <button type="button" id="load-sample">Load sample</button>
-          <button type="button" id="reset">Reset</button>
+          <button type="button" id="btn-reset">Reset</button>
         </div>
       </form>
     </section>
 
     <!-- ============ REPORT / DELIVERABLE ============ -->
     <section class="panel report-panel" id="report" aria-live="polite">
-      <p class="placeholder">Fill in the profile and click <strong>Assess</strong> to generate a recommendation report.</p>
+      <p class="placeholder">Fill in the four sections and click <strong>Assess</strong> to generate the internal analysis.</p>
     </section>
   </main>
 
-  <!-- Scripts: order matters (config/util/data first, then engine, then UI). -->
+  <!-- Scripts: config/util/data first, then engine, then UI. -->
   <script src="js/config.js"></script>
   <script src="js/util.js"></script>
   <script src="js/data/sectors.js"></script>
   <script src="js/data/sample.js"></script>
+  <script src="js/engine/accounting.js"></script>
   <script src="js/engine/concentration.js"></script>
   <script src="js/engine/insurance.js"></script>
   <script src="js/engine/tax.js"></script>
   <script src="js/engine/legal.js"></script>
   <script src="js/engine/assessment.js"></script>
+  <script src="js/ui/accordion.js"></script>
+  <script src="js/ui/uploads.js"></script>
+  <script src="js/ui/forms.js"></script>
+  <script src="js/ui/report.js"></script>
   <script src="js/ui/app.js"></script>
 </body>
 </html>
