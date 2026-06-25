@@ -13,7 +13,8 @@ HARP.ui.report = (function () {
   }
 
   // Static color zones (same scale on every gauge): red 0-40, yellow 40-80, green 80-100.
-  var ZONE_RED = '#d9453a', ZONE_YELLOW = '#f2c20e', ZONE_GREEN = '#34a853';
+  // Softened / lower-saturation zone colors for a calmer look.
+  var ZONE_RED = '#cf7268', ZONE_YELLOW = '#d8b95c', ZONE_GREEN = '#5fa37e';
 
   // Point on a circle for a 0-100 score: 0 at top (12 o'clock), clockwise (50 -> 6 o'clock).
   function ptOn(cx, rad, s) {
@@ -23,7 +24,7 @@ HARP.ui.report = (function () {
   function zoneArc(cx, r, stroke, s1, s2, color) {
     var p1 = ptOn(cx, r, s1), p2 = ptOn(cx, r, s2);
     var large = (s2 - s1) > 50 ? 1 : 0;
-    return '<path fill="none" stroke="' + color + '" stroke-width="' + stroke + '" d="M ' +
+    return '<path fill="none" stroke="' + color + '" stroke-width="' + stroke + '" stroke-linecap="round" d="M ' +
       p1.x.toFixed(2) + ' ' + p1.y.toFixed(2) + ' A ' + r.toFixed(2) + ' ' + r.toFixed(2) +
       ' 0 ' + large + ' 1 ' + p2.x.toFixed(2) + ' ' + p2.y.toFixed(2) + '"/>';
   }
@@ -60,10 +61,11 @@ HARP.ui.report = (function () {
     }
 
     score = Math.max(0, Math.min(100, Math.round(score)));
+    var g = 4; // small gap (%) between zones so the rounded ends break apart
     return head +
-      zoneArc(cx, r, stroke, 0, 40, ZONE_RED) +
-      zoneArc(cx, r, stroke, 40, 80, ZONE_YELLOW) +
-      zoneArc(cx, r, stroke, 80, 100, ZONE_GREEN) +
+      zoneArc(cx, r, stroke, g / 2, 40 - g / 2, ZONE_RED) +
+      zoneArc(cx, r, stroke, 40 + g / 2, 80 - g / 2, ZONE_YELLOW) +
+      zoneArc(cx, r, stroke, 80 + g / 2, 100 - g / 2, ZONE_GREEN) +
       marker(cx, r, stroke, ts, score) +
       '<text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" class="gauge-num" ' +
       'style="font-size:' + (size < 100 ? 19 : 36) + 'px">' + score + '</text>' +
