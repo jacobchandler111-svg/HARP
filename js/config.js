@@ -61,7 +61,15 @@ HARP.config = {
 
   // Accounting / 1040
   accounting: {
-    highEffectiveRatePct: 25         // effective tax rate above this prompts a tax-efficiency note
+    highEffectiveRatePct: 25,        // effective tax rate above this prompts a tax-efficiency note
+    highIncomeThreshold: 150000,     // gross income at/above this + only the standard deduction => possible missed savings
+    // IRS standard deduction by filing status (tax year 2025, OBBBA-adjusted). Refresh each tax year.
+    standardDeductions: {
+      'Single': 15750,
+      'Married filing jointly': 31500,
+      'Married filing separately': 15750,
+      'Head of household': 23625
+    }
   },
 
   // Legal / estate

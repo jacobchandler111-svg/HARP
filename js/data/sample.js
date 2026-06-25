@@ -1,7 +1,8 @@
 // Example household used by the "Load sample" button. Crafted to exercise every check:
 // heavy Technology weighting, large embedded gains (AAPL, NVDA) flagged in both investments and tax, a
-// below-market 3-year average return, face value below both the future-income value and liabilities, no
-// tax-free bucket, >$5M assets with no asset-protection trust, an out-of-date will, and missing estate documents.
+// return trailing the S&P 500, a high income on only the standard deduction, face value below both the
+// future-income value and liabilities, no tax-free bucket, >$5M assets with no asset-protection trust,
+// an out-of-date will, and missing estate documents.
 window.HARP = window.HARP || {};
 
 HARP.sample = {
