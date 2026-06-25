@@ -24,25 +24,29 @@ body {
   line-height: 1.45;
 }
 
+/* ---- header ---- */
 .app-header {
   background: var(--panel);
   border-bottom: 1px solid var(--line);
   padding: 14px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 .brand { display: flex; align-items: baseline; gap: 12px; }
-.logo {
-  font-weight: 800; font-size: 22px; letter-spacing: 0.5px; color: var(--brand-ink);
-}
+.logo { font-weight: 800; font-size: 22px; letter-spacing: 0.5px; color: var(--brand-ink); }
 .tagline { color: var(--muted); font-size: 14px; }
+.header-firm { color: var(--brand-ink); font-weight: 700; font-size: 15px; }
 
+/* ---- layout ---- */
 .layout {
   display: grid;
-  grid-template-columns: minmax(380px, 1fr) minmax(420px, 1.1fr);
+  grid-template-columns: minmax(400px, 1fr) minmax(440px, 1.15fr);
   gap: 20px;
   padding: 20px;
   align-items: start;
 }
-@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+@media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
 
 .panel {
   background: var(--panel);
@@ -51,11 +55,38 @@ body {
   padding: 18px 20px;
 }
 
-/* ---- form ---- */
-fieldset { border: 1px solid var(--line); border-radius: 8px; margin: 0 0 16px; padding: 12px 14px; }
-legend { font-weight: 700; color: var(--brand-ink); padding: 0 6px; }
-.hint { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
+/* ---- client meta ---- */
+.client-meta { margin-bottom: 14px; }
 
+/* ---- accordion ---- */
+.accordion-item { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+.accordion-header {
+  width: 100%; text-align: left; display: flex; align-items: center; gap: 10px;
+  background: #f8fafc; border: none; border-bottom: 1px solid var(--line);
+  padding: 12px 14px; cursor: pointer; font-weight: 700; color: var(--brand-ink); font-size: 15px;
+}
+.accordion-header:hover { background: #f1f5fb; }
+.accordion-item.collapsed .accordion-header { border-bottom: none; }
+.accordion-item.collapsed .accordion-body { display: none; }
+.chev { transition: transform .15s ease; display: inline-block; color: var(--muted); }
+.accordion-item.collapsed .chev { transform: rotate(-90deg); }
+.accordion-body { padding: 14px; }
+h4.sub { margin: 16px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
+h4.sub:first-child { margin-top: 0; }
+
+/* ---- dropzone ---- */
+.dropzone {
+  border: 2px dashed var(--line); border-radius: 8px; padding: 14px; text-align: center;
+  background: #fbfcfe; transition: border-color .12s ease, background .12s ease; margin-bottom: 12px;
+}
+.dropzone.drag { border-color: var(--brand); background: #eef4ff; }
+.dz-text { margin: 0 0 4px; font-size: 14px; }
+.dz-note { margin: 0; font-size: 12px; color: var(--muted); }
+.dz-files { list-style: none; margin: 8px 0 0; padding: 0; text-align: left; font-size: 13px; }
+.dz-files li { display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; background: #fff; border: 1px solid var(--line); border-radius: 5px; margin-top: 4px; }
+
+/* ---- form fields ---- */
+.hint { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
 label { display: flex; flex-direction: column; font-size: 13px; color: var(--muted); gap: 4px; }
 input[type="text"], input[type="number"], select {
@@ -65,7 +96,9 @@ input[type="text"], input[type="number"], select {
 input:focus, select:focus { outline: 2px solid var(--brand); outline-offset: 0; border-color: var(--brand); }
 
 .checklist { display: grid; gap: 8px; }
-.checklist label { flex-direction: row; align-items: center; gap: 8px; font-size: 14px; color: var(--ink); }
+.checklist label, .questions label.q { flex-direction: row; align-items: center; gap: 8px; font-size: 14px; color: var(--ink); }
+.questions { display: grid; gap: 10px; margin-bottom: 12px; }
+.opt { color: var(--muted); font-size: 12px; }
 
 /* ---- holdings table ---- */
 table.holdings { width: 100%; border-collapse: collapse; }
@@ -73,26 +106,35 @@ table.holdings th { text-align: left; font-size: 12px; color: var(--muted); padd
 table.holdings th.num, table.holdings td.num { text-align: right; }
 table.holdings td { padding: 3px 6px; }
 table.holdings input, table.holdings select { width: 100%; }
-.icon-btn {
-  border: none; background: transparent; color: var(--risk); cursor: pointer;
-  font-size: 18px; line-height: 1; padding: 2px 6px;
-}
-.link-btn {
-  border: none; background: transparent; color: var(--brand); cursor: pointer;
-  font: inherit; padding: 6px 0; margin-top: 6px;
-}
+
+/* ---- insurance policies ---- */
+.policy-add { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
+.policy-card { display: flex; align-items: flex-end; gap: 8px; margin-top: 8px; }
+.policy-card label { flex: 1; }
+
+.icon-btn { border: none; background: transparent; color: var(--risk); cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; }
+.link-btn { border: none; background: transparent; color: var(--brand); cursor: pointer; font: inherit; padding: 6px 0; }
 
 /* ---- actions / buttons ---- */
-.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
-button {
-  font: inherit; cursor: pointer; padding: 9px 16px; border-radius: 7px;
-  border: 1px solid var(--line); background: #fff; color: var(--ink);
-}
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+button { font: inherit; cursor: pointer; padding: 9px 16px; border-radius: 7px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
 button.primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
 button:hover { filter: brightness(0.97); }
 
 /* ---- report ---- */
 .placeholder { color: var(--muted); text-align: center; padding: 40px 0; }
+
+.report-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.report-toolbar .primary, .report-toolbar button { margin-left: auto; }
+.report-toolbar button + button { margin-left: 8px; }
+.mode-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 3px 9px; border-radius: 20px; }
+.mode-tag.internal { background: #fff4e0; color: #8a5a00; }
+.mode-tag.client { background: #e6f6ec; color: #1e6e44; }
+
+.client-banner { display: flex; align-items: baseline; gap: 12px; border-bottom: 3px solid var(--brand-ink); padding-bottom: 10px; margin-bottom: 14px; }
+.firm-name { font-size: 24px; font-weight: 800; color: var(--brand-ink); letter-spacing: .5px; }
+.firm-logo { max-height: 44px; }
+.firm-tag { color: var(--muted); font-size: 14px; }
 
 .report-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; border-bottom: 2px solid var(--line); padding-bottom: 12px; margin-bottom: 16px; }
 .report-head h2 { margin: 0 0 2px; font-size: 20px; }
@@ -106,12 +148,12 @@ button:hover { filter: brightness(0.97); }
 .finding { border-left: 4px solid var(--info); padding: 8px 12px; margin: 8px 0; background: #fafbfd; border-radius: 0 6px 6px 0; }
 .finding.risk { border-left-color: var(--risk); }
 .finding.warn { border-left-color: var(--warn); }
-.finding.ok   { border-left-color: var(--ok); }
+.finding.ok { border-left-color: var(--ok); }
 .finding.info { border-left-color: var(--info); }
 .finding .badge { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 1px 6px; border-radius: 4px; color: #fff; margin-right: 6px; vertical-align: middle; }
 .badge.risk { background: var(--risk); }
 .badge.warn { background: var(--warn); }
-.badge.ok   { background: var(--ok); }
+.badge.ok { background: var(--ok); }
 .badge.info { background: var(--info); }
 .finding .ftitle { font-weight: 600; }
 .finding .fdetail { font-size: 13px; color: var(--ink); margin-top: 2px; }
@@ -126,6 +168,8 @@ table.data td.num, table.data th.num { text-align: right; }
 
 .checkrow { display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 3px 0; }
 .checkrow .yes { color: var(--ok); font-weight: 700; }
-.checkrow .no  { color: var(--risk); font-weight: 700; }
+.checkrow .no { color: var(--risk); font-weight: 700; }
 
-.disclaimer { margin-top: 20px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); }
+.branded-footer { margin-top: 22px; padding-top: 10px; border-top: 2px solid var(--brand-ink); }
+.firm-contact { font-size: 12px; color: var(--brand-ink); font-weight: 600; margin-bottom: 6px; }
+.disclaimer { font-size: 11px; color: var(--muted); }

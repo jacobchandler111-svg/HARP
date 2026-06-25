@@ -1,15 +1,19 @@
 // Example household used by the "Load sample" button. Crafted to exercise every check:
-// heavy Technology weighting (sector + single-stock flags), a large life-insurance gap,
-// no tax-free bucket, and two missing estate documents.
+// heavy Technology weighting, a large life-insurance gap, missing disability + umbrella,
+// low dwelling coverage, no tax-free bucket, and missing estate documents.
 window.HARP = window.HARP || {};
 
 HARP.sample = {
   name: 'Sample Household',
-  income: 150000,
-  dependents: 2,
-  lifeCoverage: 250000,
 
-  // Accounts & tax (investable assets by tax treatment)
+  // 1040 / accounting
+  filingStatus: 'Married filing jointly',
+  income: 150000,
+  agi: 138000,
+  totalTax: 24000,
+  dependents: 2,
+
+  // Account balances by tax treatment
   taxable: 400000,
   taxDeferred: 600000,
   taxFree: 0,
@@ -23,11 +27,23 @@ HARP.sample = {
     { ticker: 'XOM',  name: 'Exxon Mobil',       sector: 'Energy',              value: 40000 }
   ],
 
+  insurance: {
+    employed: true,
+    ownsHome: true,
+    homeValue: 450000,
+    life: { has: true, coverage: 250000 },
+    disability: { has: false, monthlyBenefit: 0 },
+    property: { has: true, dwellingCoverage: 300000 },
+    umbrella: { has: false, coverage: 0 }
+  },
+
   legal: {
     will: true,
     poa: false,
     healthcare: false,
     beneficiaries: true,
-    trust: false
+    guardianship: false,
+    trust: false,
+    assetInventory: false
   }
 };

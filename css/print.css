@@ -1,42 +1,38 @@
 /* Print / "Save as PDF" styles — this is the actual deliverable.
-   Hides the input form and chrome, leaving just the recommendation report. */
+   Hides the input form and app chrome, leaving just the report (use the client view for
+   the polished, Brookhaven-branded output). */
 @page {
   size: letter;
-  margin: 18mm 16mm;
+  margin: 16mm 14mm;
 }
 
+/* Hide everything that isn't the report itself. */
 .no-print,
 .form-panel,
 .app-header,
-.report-actions {
+.report-toolbar {
   display: none !important;
 }
 
 body { background: #fff; color: #000; }
 
-.layout {
-  display: block;
-  padding: 0;
-}
+.layout { display: block; padding: 0; gap: 0; }
+.report-panel { border: none; border-radius: 0; padding: 0; max-width: 100%; }
+.report { font-size: 12px; }
 
-.report-panel {
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  max-width: 100%;
-}
-
-/* Keep findings and tables from splitting awkwardly across pages */
+/* Avoid awkward breaks mid-element. */
 .finding,
 .checkrow,
+.client-banner,
+.branded-footer,
+.report-head,
 table.data tr {
   page-break-inside: avoid;
 }
+.report h3 { page-break-after: avoid; }
 
-.report h3 {
-  page-break-after: avoid;
-}
-
-.disclaimer {
-  position: running(footer);
+/* Keep brand/severity colors when printing to PDF. */
+.badge, .bar, .client-banner, .branded-footer {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }

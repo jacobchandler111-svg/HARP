@@ -5,12 +5,14 @@ HARP.assessment = (function () {
   function run(profile) {
     var cfg = HARP.config;
 
+    var accounting = HARP.accounting.analyze(profile, cfg);
     var concentration = HARP.concentration.analyze(profile.holdings || [], cfg);
     var insurance = HARP.insurance.analyze(profile, cfg);
     var tax = HARP.tax.analyze(profile, cfg);
     var legal = HARP.legal.analyze(profile);
 
     var findings = [].concat(
+      accounting.findings,
       concentration.findings,
       insurance.findings,
       tax.findings,
@@ -22,6 +24,7 @@ HARP.assessment = (function () {
 
     return {
       profile: profile,
+      accounting: accounting,
       concentration: concentration,
       insurance: insurance,
       tax: tax,
@@ -36,13 +39,11 @@ HARP.assessment = (function () {
   function scoreFrom(counts, cfg) {
     var value = 100 - (counts.risk * cfg.score.perRisk) - (counts.warn * cfg.score.perWarn);
     value = Math.max(0, Math.min(100, value));
-
     var band =
       value >= 80 ? 'Healthy' :
       value >= 60 ? 'Some attention needed' :
       value >= 40 ? 'Several gaps' :
                     'Significant gaps';
-
     return { value: value, band: band };
   }
 
