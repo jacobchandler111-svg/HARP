@@ -7,9 +7,21 @@ HARP.ui.forms = (function () {
   var esc = HARP.util.escape;
   function $(id) { return document.getElementById(id); }
   function val(id) { var e = $(id); return e ? e.value.trim() : ''; }
-  function num(id) { return parseFloat(val(id)) || 0; }
+  function cleanNum(s) { return String(s == null ? '' : s).replace(/[,$\s]/g, ''); }
+  function num(id) { return parseFloat(cleanNum(val(id))) || 0; }
   // Like num(), but keeps a blank field as '' (not 0) so an unanswered value is not read as a real 0.
-  function numOrBlank(id) { var v = val(id); return v === '' ? '' : parseFloat(v); }
+  function numOrBlank(id) { var v = cleanNum(val(id)); return v === '' ? '' : parseFloat(v); }
+  // Accounting format with thousands separators, for dollar inputs (1000000 -> "1,000,000").
+  function commaFmt(s) {
+    var clean = String(s == null ? '' : s).replace(/[^\d.]/g, '');
+    if (clean === '') return '';
+    var parts = clean.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.length > 1 ? parts[0] + '.' + parts.slice(1).join('') : parts[0];
+  }
+  function formatDollarInputs(root) {
+    (root || document).querySelectorAll('input.dollar').forEach(function (el) { el.value = commaFmt(el.value); });
+  }
   function int(id) { return parseInt(val(id), 10) || 0; }
   function checked(id) { var e = $(id); return e ? e.checked : false; }
   function setVal(id, v) { var e = $(id); if (e) e.value = (v == null ? '' : v); }
@@ -41,7 +53,7 @@ HARP.ui.forms = (function () {
       '<td><input type="text" class="h-ticker" value="' + esc(h.ticker) + '" placeholder="AAPL" /></td>' +
       '<td><input type="text" class="h-name" value="' + esc(h.name) + '" placeholder="Apple Inc." /></td>' +
       '<td><select class="h-sector">' + sectorOptions(h.sector) + '</select></td>' +
-      '<td class="num"><input type="number" class="h-value" min="0" step="1000" value="' + esc(h.value) + '" placeholder="0" /></td>' +
+      '<td class="num"><input type="text" inputmode="decimal" class="h-value dollar" value="' + esc(commaFmt(h.value)) + '" placeholder="0" /></td>' +
       '<td><button type="button" class="icon-btn" title="Remove">&times;</button></td>';
     $('holdings-body').appendChild(tr);
 
@@ -58,7 +70,7 @@ HARP.ui.forms = (function () {
   function readHoldings() {
     var out = [];
     $('holdings-body').querySelectorAll('tr').forEach(function (tr) {
-      var value = parseFloat(tr.querySelector('.h-value').value) || 0;
+      var value = parseFloat(cleanNum(tr.querySelector('.h-value').value)) || 0;
       var name = tr.querySelector('.h-name').value.trim();
       var ticker = tr.querySelector('.h-ticker').value.trim();
       if (value <= 0 && !name && !ticker) return; // skip empty rows
@@ -85,33 +97,33 @@ HARP.ui.forms = (function () {
     }).join('');
   }
   function syncInsuranceCascade() {
-    var has = $('ins-hasPolicies');
-    if (has) $('ins-policies-followup').hidden = !has.checked;
+    var f = $('ins-policies-followup');
+    if (f) f.hidden = !nameBool('ins-hasPolicies');
   }
   function buildInsuranceInputs() {
     $('insurance-inputs').innerHTML =
-      '<div class="ins-q">' +
-        '<label><input type="checkbox" id="ins-hasPolicies" /> Has insurance policies</label>' +
-        '<div class="legal-followup" id="ins-policies-followup" hidden>' +
-          '<label>What policies? <span class="opt">(select all that apply)</span>' +
-            '<select id="ins-policyTypes" multiple size="4">' + policyTypeOptions() + '</select></label>' +
-          '<label>Total face value of all policies ($)<input type="number" id="ins-totalFaceValue" min="0" step="1000" placeholder="0" /></label>' +
-        '</div>' +
+      yesNoToggle('ins-hasPolicies', 'Do you have any insurance policies?') +
+      '<div class="q-followup" id="ins-policies-followup" hidden>' +
+        '<label>What policies? <span class="opt">(select all that apply)</span>' +
+          '<select id="ins-policyTypes" multiple size="4">' + policyTypeOptions() + '</select></label>' +
+        '<label>Total payout (face value) across all policies ($)' +
+          '<input type="text" inputmode="decimal" class="dollar" id="ins-totalFaceValue" placeholder="0" /></label>' +
       '</div>';
-    var has = $('ins-hasPolicies');
-    if (has) has.addEventListener('change', syncInsuranceCascade);
+    $('insurance-inputs').addEventListener('change', function (e) {
+      if (e.target && /^ins-hasPolicies-(yes|no)$/.test(e.target.id)) syncInsuranceCascade();
+    });
     syncInsuranceCascade();
   }
   function readInsurance() {
     return {
-      hasPolicies: checked('ins-hasPolicies'),
+      hasPolicies: nameBool('ins-hasPolicies'),
       policyTypes: selectedValues($('ins-policyTypes')),
       totalFaceValue: num('ins-totalFaceValue')
     };
   }
   function loadInsurance(ins) {
     ins = ins || {};
-    setChecked('ins-hasPolicies', !!ins.hasPolicies);
+    setNameBool('ins-hasPolicies', !!ins.hasPolicies);
     setMultiSelect($('ins-policyTypes'), ins.policyTypes);
     setVal('ins-totalFaceValue', ins.totalFaceValue);
     syncInsuranceCascade();
@@ -120,11 +132,7 @@ HARP.ui.forms = (function () {
   // ---------------------------------------------------------------- legal
   // Nicer question phrasing per essential-document key (falls back to the engine's label).
   var LEGAL_Q = {
-    poa: 'Have you designated a financial power of attorney?',
-    healthcare: 'Do you have a healthcare directive / medical POA?',
-    beneficiaries: 'Have your beneficiary designations been reviewed in the last 12 months?',
-    guardianship: 'Have you designated a guardian for any minor children?',
-    assetInventory: 'Do you have an asset inventory / letter of instruction?'
+    poa: 'Have you designated a financial and healthcare power of attorney?'
   };
   // "How long since reviewed" dropdown. Values are representative year counts so the engine's
   // reviewSeverity (>5 => risk, >3 => warn) reads them directly.
@@ -137,28 +145,27 @@ HARP.ui.forms = (function () {
       '<option value="99">Never reviewed</option>';
   }
   // A "question on the left, Yes / No toggle on the right" row, backed by a radio pair.
-  function yesNoRow(key, question) {
-    var n = 'legal-' + key;
+  // `name` is the full radio-group name (e.g. 'legal-will' or 'ins-hasPolicies').
+  function yesNoToggle(name, question) {
     return '<div class="q-row">' +
       '<span class="q-label">' + esc(question) + '</span>' +
       '<span class="yesno" role="radiogroup" aria-label="' + esc(question) + '">' +
-        '<input type="radio" name="' + n + '" id="' + n + '-yes" value="1">' +
-        '<label for="' + n + '-yes">Yes</label>' +
-        '<input type="radio" name="' + n + '" id="' + n + '-no" value="0" checked>' +
-        '<label for="' + n + '-no">No</label>' +
+        '<input type="radio" name="' + name + '" id="' + name + '-yes" value="1">' +
+        '<label for="' + name + '-yes">Yes</label>' +
+        '<input type="radio" name="' + name + '" id="' + name + '-no" value="0" checked>' +
+        '<label for="' + name + '-no">No</label>' +
       '</span></div>';
   }
+  function yesNoRow(key, question) { return yesNoToggle('legal-' + key, question); }
+  function nameBool(name) { var e = $(name + '-yes'); return !!(e && e.checked); }
+  function setNameBool(name, v) { var y = $(name + '-yes'), n = $(name + '-no'); if (y) y.checked = !!v; if (n) n.checked = !v; }
   function trustTypeChecks() {
     return HARP.legal.TRUST_TYPES.map(function (t) {
       return '<label class="trust-type-opt"><input type="checkbox" class="trust-type" value="' + esc(t.key) + '"> ' + esc(t.label) + '</label>';
     }).join('');
   }
-  function radioBool(key) { var e = $('legal-' + key + '-yes'); return !!(e && e.checked); }
-  function setRadioBool(key, v) {
-    var y = $('legal-' + key + '-yes'), n = $('legal-' + key + '-no');
-    if (y) y.checked = !!v;
-    if (n) n.checked = !v;
-  }
+  function radioBool(key) { return nameBool('legal-' + key); }
+  function setRadioBool(key, v) { setNameBool('legal-' + key, v); }
   function trustTypesChecked() {
     return Array.prototype.map.call(document.querySelectorAll('#legal-checklist .trust-type:checked'),
       function (c) { return c.value; });
@@ -192,8 +199,8 @@ HARP.ui.forms = (function () {
     $('legal-checklist').innerHTML =
       yesNoRow('will', 'Do you have a will?') +
       '<div class="q-followup" id="legal-will-followup" hidden>' +
-        '<label>How long since your will was last reviewed?' +
-          '<select id="legal-willReviewedYears">' + reviewOptions() + '</select></label>' +
+        '<div class="q-row q-sub"><span class="q-label">How many years since your will was reviewed?</span>' +
+          '<input type="number" class="q-num" id="legal-willReviewedYears" min="0" step="1" placeholder="0" /></div>' +
       '</div>' +
       yesNoRow('poa', LEGAL_Q.poa) +
       yesNoRow('trust', 'Do you have a trust set up?') +
@@ -201,8 +208,8 @@ HARP.ui.forms = (function () {
         '<div class="subq-label">What type(s) of trust? <span class="opt">(select all that apply)</span></div>' +
         '<div class="trust-types">' + trustTypeChecks() + '</div>' +
         '<div class="q-followup" id="legal-trustReviewed-followup" hidden>' +
-          '<label>How long since your trust(s) were last reviewed?' +
-            '<select id="legal-trustReviewedYears">' + reviewOptions() + '</select></label>' +
+          '<div class="q-row q-sub"><span class="q-label">How many years since your trust(s) were reviewed?</span>' +
+            '<input type="number" class="q-num" id="legal-trustReviewedYears" min="0" step="1" placeholder="0" /></div>' +
         '</div>' +
       '</div>' +
       rest;
@@ -249,6 +256,10 @@ HARP.ui.forms = (function () {
     if (!form) return;
     form.addEventListener('input', scheduleSave);
     form.addEventListener('change', scheduleSave);
+    // Re-format dollar fields with commas when the user leaves the field.
+    form.addEventListener('focusout', function (e) {
+      if (e.target && e.target.classList && e.target.classList.contains('dollar')) e.target.value = commaFmt(e.target.value);
+    });
   }
 
   // ---------------------------------------------------------------- profile
@@ -286,6 +297,7 @@ HARP.ui.forms = (function () {
     setVal('yearsToRetirement', p.yearsToRetirement);
     loadInsurance(p.insurance);
     loadLegal(p.legal);
+    formatDollarInputs();
     save();
   }
   function reset() {

@@ -61,9 +61,9 @@
 
             <h4 class="sub">Account balances by tax treatment</h4>
             <div class="grid">
-              <label>Taxable ($)<input type="number" id="taxable" min="0" step="1000" placeholder="0" /></label>
-              <label>Tax-deferred — 401k/IRA ($)<input type="number" id="taxDeferred" min="0" step="1000" placeholder="0" /></label>
-              <label>Tax-free — Roth/HSA ($)<input type="number" id="taxFree" min="0" step="1000" placeholder="0" /></label>
+              <label>Taxable ($)<input type="text" inputmode="decimal" class="dollar" id="taxable" placeholder="0" /></label>
+              <label>Tax-deferred — 401k/IRA ($)<input type="text" inputmode="decimal" class="dollar" id="taxDeferred" placeholder="0" /></label>
+              <label>Tax-free — Roth/HSA ($)<input type="text" inputmode="decimal" class="dollar" id="taxFree" placeholder="0" /></label>
             </div>
           </div>
         </section>
@@ -92,9 +92,8 @@
                   <option>Head of household</option>
                 </select>
               </label>
-              <label>Annual gross income ($)<input type="number" id="income" min="0" step="1000" placeholder="0" /></label>
-              <label>AGI ($)<input type="number" id="agi" min="0" step="1000" placeholder="0" /></label>
-              <label>Total tax ($)<input type="number" id="totalTax" min="0" step="500" placeholder="0" /></label>
+              <label>Annual gross income ($)<input type="text" inputmode="decimal" class="dollar" id="income" placeholder="0" /></label>
+              <label>Annual adjusted gross income — AGI ($)<input type="text" inputmode="decimal" class="dollar" id="agi" placeholder="0" /></label>
               <label>Dependents<input type="number" id="dependents" min="0" step="1" placeholder="0" /></label>
             </div>
           </div>
@@ -109,8 +108,8 @@
           <div class="accordion-body">
             <h4 class="sub">Assets &amp; liabilities</h4>
             <div class="grid">
-              <label>Total assets ($)<input type="number" id="assets" min="0" step="1000" placeholder="0" /></label>
-              <label>Total liabilities ($)<input type="number" id="liabilities" min="0" step="1000" placeholder="0" /></label>
+              <label>Total assets ($)<input type="text" inputmode="decimal" class="dollar" id="assets" placeholder="0" /></label>
+              <label>Total liabilities ($)<input type="text" inputmode="decimal" class="dollar" id="liabilities" placeholder="0" /></label>
             </div>
             <div class="grid">
               <label>Years until retirement<input type="number" id="yearsToRetirement" min="0" step="1" placeholder="e.g. 20" /></label>
