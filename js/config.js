@@ -22,12 +22,20 @@ HARP.config = {
   // S&P 500 fund or a cash balance is not single-name or sector risk.
   nonConcentratingSectors: ['Diversified / Fund', 'Cash & Equivalents'],
 
-  // Investment performance vs the market (3-year average annual return)
+  // Investment performance: the client's most recent full-year return is compared to TWO benchmarks —
+  // a fixed long-run market assumption, and the actual annualized S&P 500 return for the last 3 years.
   performance: {
     benchmarkName: 'S&P 500',
-    benchmarkReturnPct: 10,   // ~3-year average annual return for the benchmark (tunable; ~10-12%)
-    tolerancePct: 0,          // any underperformance vs the benchmark flags (moderate)
-    severeGapPct: 5           // underperforming by 5 points or more => critical (risk)
+    assumedMarketReturnPct: 11,   // fixed long-run market assumption (advisor-tunable; ~10-11%)
+    tolerancePct: 0,              // any underperformance vs a benchmark flags (moderate)
+    severeGapPct: 5,              // 5+ points below the assumed market => critical (risk)
+    // Actual S&P 500 total returns (with dividends), looked up — REFRESH ANNUALLY. annualizedPct is the
+    // geometric mean: ((1.263)(1.250)(1.179))^(1/3)-1 ~= 23.0%. Sources: slickcharts / First Trust / RBC.
+    trailing3yr: {
+      years: '2023-2025',
+      annualReturnsPct: [26.3, 25.0, 17.9],
+      annualizedPct: 23.0
+    }
   },
 
   // Embedded / unrealized gains — needs a cost basis on the holding. A large low-basis position is

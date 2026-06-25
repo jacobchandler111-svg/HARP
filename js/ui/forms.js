@@ -34,12 +34,14 @@ HARP.ui.forms = (function () {
   function addHoldingRow(h) {
     h = h || { ticker: '', name: '', sector: '', value: '' };
     var tr = document.createElement('tr');
+    // Cost basis is not a manual field — it only arrives from a scanned statement (Phase 2). Keep it
+    // invisibly on the row so loaded/scanned data round-trips and the embedded-gain check still works.
+    tr.dataset.costBasis = (h.costBasis == null ? '' : h.costBasis);
     tr.innerHTML =
       '<td><input type="text" class="h-ticker" value="' + esc(h.ticker) + '" placeholder="AAPL" /></td>' +
       '<td><input type="text" class="h-name" value="' + esc(h.name) + '" placeholder="Apple Inc." /></td>' +
       '<td><select class="h-sector">' + sectorOptions(h.sector) + '</select></td>' +
       '<td class="num"><input type="number" class="h-value" min="0" step="1000" value="' + esc(h.value) + '" placeholder="0" /></td>' +
-      '<td class="num"><input type="number" class="h-basis" min="0" step="1000" value="' + esc(h.costBasis == null ? '' : h.costBasis) + '" placeholder="—" /></td>' +
       '<td><button type="button" class="icon-btn" title="Remove">&times;</button></td>';
     $('holdings-body').appendChild(tr);
 
@@ -60,29 +62,20 @@ HARP.ui.forms = (function () {
       var name = tr.querySelector('.h-name').value.trim();
       var ticker = tr.querySelector('.h-ticker').value.trim();
       if (value <= 0 && !name && !ticker) return; // skip empty rows
-      var basisStr = tr.querySelector('.h-basis').value.trim();
+      var basis = tr.dataset.costBasis;
       out.push({ ticker: ticker, name: name, sector: tr.querySelector('.h-sector').value, value: value,
-        costBasis: basisStr === '' ? '' : (parseFloat(basisStr) || 0) });
+        costBasis: (basis == null || basis === '') ? '' : (parseFloat(basis) || 0) });
     });
     return out;
   }
 
-  // ---------------------------------------------------------------- performance (last 3 years)
-  function perfYears() {
-    var now = new Date().getFullYear();
-    return [now - 3, now - 2, now - 1];
-  }
+  // ---------------------------------------------------------------- performance (most recent full year)
+  function perfYear() { return new Date().getFullYear() - 1; }
   function buildPerformanceInputs() {
-    $('performance-inputs').innerHTML = perfYears().map(function (y) {
-      return '<label>' + y + ' return (%)<input type="number" class="ret-input" id="ret-' + y +
-        '" step="0.1" placeholder="e.g. 7.5" /></label>';
-    }).join('');
-  }
-  function readAnnualReturns() {
-    return perfYears().map(function (y) { return { year: y, pct: numOrBlank('ret-' + y) }; });
-  }
-  function loadAnnualReturns(rows) {
-    (rows || []).forEach(function (r) { if (r) setVal('ret-' + r.year, r.pct); });
+    var y = perfYear();
+    $('performance-inputs').innerHTML =
+      '<label>' + y + ' return (%) <span class="opt">(most recent full year)</span>' +
+      '<input type="number" id="yearReturnPct" step="0.1" placeholder="e.g. 12.5" /></label>';
   }
 
   // ---------------------------------------------------------------- insurance
@@ -223,7 +216,7 @@ HARP.ui.forms = (function () {
       taxable: num('taxable'),
       taxDeferred: num('taxDeferred'),
       taxFree: num('taxFree'),
-      annualReturns: readAnnualReturns(),
+      yearReturnPct: numOrBlank('yearReturnPct'),
       holdings: readHoldings(),
       assets: num('assets'),
       liabilities: num('liabilities'),
@@ -236,7 +229,7 @@ HARP.ui.forms = (function () {
     setVal('name', p.name); setVal('filingStatus', p.filingStatus);
     setVal('income', p.income); setVal('agi', p.agi); setVal('totalTax', p.totalTax); setVal('dependents', p.dependents);
     setVal('taxable', p.taxable); setVal('taxDeferred', p.taxDeferred); setVal('taxFree', p.taxFree);
-    loadAnnualReturns(p.annualReturns);
+    setVal('yearReturnPct', p.yearReturnPct);
 
     $('holdings-body').innerHTML = '';
     (p.holdings || []).forEach(addHoldingRow);

@@ -90,8 +90,10 @@ HARP.ui.report = (function () {
     if (a.accounting.income > 0) bits.push('Income ' + money(a.accounting.income));
     if (a.tax.total > 0) bits.push('Investable assets ' + money(a.tax.total));
     if (a.performance && a.performance.provided) {
-      bits.push('3-yr return ' + HARP.util.pct(a.performance.clientReturnPct) +
-        ' vs ' + a.performance.benchmarkName + ' ' + HARP.util.pct(a.performance.benchmarkPct));
+      var pf = a.performance;
+      bits.push(pf.periodLabel + ' return ' + HARP.util.pct(pf.clientReturnPct) +
+        ' vs ' + pf.benchmarkName + ' ' + HARP.util.pct(pf.assumedMarketPct) +
+        ' / 3-yr ' + HARP.util.pct(pf.trailing3yrPct));
     }
     return bits.length ? '<div class="op-figures">' + bits.map(esc).join(' &nbsp;·&nbsp; ') + '</div>' : '';
   }

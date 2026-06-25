@@ -1,95 +1,89 @@
-// Investment performance vs the market: compares the portfolio's trailing 3-year annualized return
-// against a benchmark (default S&P 500 ~10%/yr) and flags underperformance. Pure module — no DOM.
+// Investment performance. The client's most recent full-year return is compared to TWO benchmarks: a
+// fixed long-run market assumption, and the actual annualized S&P 500 return for the last 3 years (a
+// background constant in config). Underperforming EITHER flags it. Pure module — no DOM.
 window.HARP = window.HARP || {};
 
 HARP.performance = (function () {
-  var pct = HARP.util.pct, money = HARP.util.money;
+  var pct = HARP.util.pct;
+
+  // Primary input is the single most-recent-year return; fall back to legacy fields for older saved profiles.
+  function clientFrom(profile) {
+    var raw = profile.yearReturnPct;
+    if (raw === '' || raw == null || isNaN(Number(raw))) {
+      var ar = profile.annualReturns;
+      if (ar && ar.length) { var last = ar[ar.length - 1]; raw = last && last.pct; }
+      else raw = profile.return3yrPct;
+    }
+    if (raw === '' || raw == null || isNaN(Number(raw))) return null;
+    return Number(raw);
+  }
 
   function analyze(profile, cfg) {
     cfg = cfg || HARP.config;
     var p = cfg.performance || {};
     var benchmarkName = p.benchmarkName || 'S&P 500';
-    var benchmark = Number(p.benchmarkReturnPct) || 0;
+    var assumed = Number(p.assumedMarketReturnPct) || 0;
+    var t3cfg = p.trailing3yr || {};
+    var trailing3yr = Number(t3cfg.annualizedPct) || 0;
+    var trailing3yrYears = t3cfg.years || '';
     var tolerance = Number(p.tolerancePct) || 0;
-    var severeGap = Number(p.severeGapPct) || 0;
+    var severe = Number(p.severeGapPct) || 0;
+    var periodLabel = String(new Date().getFullYear() - 1); // most recent full year
 
     var findings = [];
-
-    // The advisor enters the last few annual returns; the client's figure is their average. Blank years
-    // are ignored (an empty field must NOT be read as a real 0%). Falls back to a single trailing-return
-    // field if present (legacy profiles).
-    var annual = (profile.annualReturns || [])
-      .map(function (r) { return Number(r && r.pct); })
-      .filter(function (n) { return !isNaN(n); });
-    var clientReturn = null, provided = false;
-    if (annual.length) {
-      clientReturn = annual.reduce(function (s, n) { return s + n; }, 0) / annual.length;
-      provided = true;
-    } else if (profile.return3yrPct !== '' && profile.return3yrPct != null && !isNaN(Number(profile.return3yrPct))) {
-      clientReturn = Number(profile.return3yrPct);
-      provided = true;
-    }
-
-    // Dollar opportunity cost is best-effort: prefer summed holdings, else the investable-asset buckets.
-    var holdingsTotal = (profile.holdings || []).reduce(function (s, h) { return s + (Number(h.value) || 0); }, 0);
-    var bucketsTotal = (Number(profile.taxable) || 0) + (Number(profile.taxDeferred) || 0) + (Number(profile.taxFree) || 0);
-    var basis = holdingsTotal > 0 ? holdingsTotal : bucketsTotal;
+    var clientReturn = clientFrom(profile);
+    var provided = clientReturn != null;
 
     var result = {
       provided: provided,
       clientReturnPct: clientReturn,
-      annualReturns: (profile.annualReturns || []),
+      periodLabel: periodLabel,
       benchmarkName: benchmarkName,
-      benchmarkPct: benchmark,
-      gapPct: null,                 // client - benchmark (negative => trailing the market)
-      status: 'unknown',            // unknown | underperform | inline | outperform
-      basis: basis,
-      dollarGapAnnual: null,        // estimated $/yr difference vs a market-matching portfolio
+      assumedMarketPct: assumed,
+      trailing3yrPct: trailing3yr,
+      trailing3yrYears: trailing3yrYears,
+      gapAssumedPct: null,
+      gap3yrPct: null,
+      status: 'unknown',            // unknown | meets | underperform
       findings: findings
     };
-
     if (!provided) return result;
 
-    var gap = clientReturn - benchmark;
-    result.gapPct = gap;
-    var dollarGapAnnual = basis > 0 ? basis * (gap / 100) : null;
-    result.dollarGapAnnual = dollarGapAnnual;
+    var gapAssumed = clientReturn - assumed;   // negative => below the assumed market
+    var gap3yr = clientReturn - trailing3yr;   // negative => below the 3-year annualized
+    result.gapAssumedPct = gapAssumed;
+    result.gap3yrPct = gap3yr;
 
-    var headline = 'Portfolio returned ' + pct(clientReturn) + '/yr; the ' + benchmarkName + ' returned ' + pct(benchmark);
+    var belowAssumed = gapAssumed < -tolerance;
+    var below3yr = gap3yr < -tolerance;
 
-    if (gap < -tolerance) {
-      result.status = 'underperform';
-      var detail = 'The 3-year average return trails the ' + benchmarkName + ' benchmark by about ' +
-        pct(Math.abs(gap)) + ' per year.';
-      if (dollarGapAnnual != null && dollarGapAnnual < 0) {
-        detail += ' On about ' + money(basis) + ' invested, that is roughly ' + money(Math.abs(dollarGapAnnual)) +
-          ' a year less than a market-matching portfolio.';
-      }
-      detail += ' Review whether fees, cash drag, or security selection are holding returns back, and ' +
-        'consider lower-cost, broadly diversified index exposure.';
-      findings.push({
-        category: 'Investment performance',
-        severity: gap <= -severeGap ? 'risk' : 'warn',
-        title: headline,
-        detail: detail
-      });
-    } else if (gap > tolerance) {
-      result.status = 'outperform';
-      findings.push({
-        category: 'Investment performance',
-        severity: 'ok',
-        title: headline,
-        detail: 'The trailing 3-year return is ahead of the ' + benchmarkName + ' benchmark.'
-      });
-    } else {
-      result.status = 'inline';
-      findings.push({
-        category: 'Investment performance',
-        severity: 'ok',
-        title: headline,
-        detail: 'The trailing 3-year return is in line with the ' + benchmarkName + ' benchmark.'
-      });
+    if (!belowAssumed && !below3yr) {
+      result.status = 'meets';
+      findings.push({ category: 'Investment performance', severity: 'ok',
+        title: periodLabel + ' return of ' + pct(clientReturn) + ' matched or beat the market',
+        detail: 'At or above both the assumed ' + pct(assumed) + ' market return and the ' + benchmarkName + ' ' +
+          trailing3yrYears + ' annualized return of ' + pct(trailing3yr) + '.' });
+      return result;
     }
+
+    result.status = 'underperform';
+    // Severity is driven by how far below the assumed long-run market the client is; trailing only the
+    // (exceptionally high) 3-year figure is a moderate "could be doing better".
+    var severity = gapAssumed <= -severe ? 'risk' : 'warn';
+
+    var bits = [];
+    if (belowAssumed) bits.push('the assumed ' + pct(assumed) + ' market return (by ' + pct(Math.abs(gapAssumed)) + ')');
+    if (below3yr) bits.push('the ' + benchmarkName + ' ' + trailing3yrYears + ' annualized ' + pct(trailing3yr) +
+      ' (by ' + pct(Math.abs(gap3yr)) + ')');
+
+    findings.push({
+      category: 'Investment performance',
+      severity: severity,
+      title: periodLabel + ' return of ' + pct(clientReturn) + ' trails the market',
+      detail: 'The portfolio is below ' + bits.join(' and ') + '. ' + (severity === 'risk'
+        ? 'A sizable shortfall versus a normal market year — review fees, cash drag, and security selection, and consider lower-cost index exposure.'
+        : 'There was room to do better — review whether fees, cash drag, or security selection are holding returns back.')
+    });
 
     return result;
   }
