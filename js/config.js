@@ -26,11 +26,10 @@ HARP.config = {
   // a fixed long-run market assumption, and the actual annualized S&P 500 return for the last 3 years.
   performance: {
     benchmarkName: 'S&P 500',
-    assumedMarketReturnPct: 11,   // fixed long-run market assumption (advisor-tunable; ~10-11%)
-    tolerancePct: 0,              // any underperformance vs a benchmark flags (moderate)
-    severeGapPct: 5,              // 5+ points below the assumed market => critical (risk)
-    // Actual S&P 500 total returns (with dividends), looked up — REFRESH ANNUALLY. annualizedPct is the
-    // geometric mean: ((1.263)(1.250)(1.179))^(1/3)-1 ~= 23.0%. Sources: slickcharts / First Trust / RBC.
+    tolerancePct: 0,              // any underperformance vs the benchmark flags
+    // Single benchmark = the actual S&P 500 recent annualized return (with dividends), looked up —
+    // REFRESH ANNUALLY. annualizedPct is the geometric mean: ((1.263)(1.250)(1.179))^(1/3)-1 ~= 23.0%.
+    // Sources: slickcharts / First Trust / RBC.
     trailing3yr: {
       years: '2023-2025',
       annualReturnsPct: [26.3, 25.0, 17.9],

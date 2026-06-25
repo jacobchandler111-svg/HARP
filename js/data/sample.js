@@ -19,8 +19,8 @@ HARP.sample = {
   taxDeferred: 600000,
   taxFree: 0,
 
-  // Most recent full-year (2025) portfolio return — below both the assumed 11% market and the ~23%
-  // 2023-2025 annualized, so it flags as underperformance (a 6-pt shortfall vs 11% => critical).
+  // Most recent full-year (2025) portfolio return — below the S&P 500's recent annualized (~23%), so it
+  // flags as trailing the market.
   yearReturnPct: 5,
 
   // Years until retirement — drives the economic-value-of-future-income method.
