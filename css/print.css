@@ -1,38 +1,34 @@
-/* Print / "Save as PDF" styles — this is the actual deliverable.
-   Hides the input form and app chrome, leaving just the report (use the client view for
-   the polished, Brookhaven-branded output). */
+/* Print / "Save as PDF" — prints ONLY the preview one-pager, tuned to fit a single page. */
 @page {
   size: letter;
-  margin: 16mm 14mm;
+  margin: 12mm 12mm;
 }
 
-/* Hide everything that isn't the report itself. */
+/* Hide app chrome and the input page — leave just the one-pager. */
 .no-print,
-.form-panel,
 .app-header,
-.report-toolbar {
+#screen-input,
+.preview-toolbar {
   display: none !important;
 }
 
 body { background: #fff; color: #000; }
+.wrap { max-width: 100%; margin: 0; padding: 0; }
+#screen-preview { display: block !important; }
 
-.layout { display: block; padding: 0; gap: 0; }
-.report-panel { border: none; border-radius: 0; padding: 0; max-width: 100%; }
-.report { font-size: 12px; }
+/* Flatten the "paper" card and tighten spacing so it lands on one page. */
+.onepager { border: none; border-radius: 0; box-shadow: none; padding: 0; font-size: 11px; }
+.op-header { margin-bottom: 10px; padding-bottom: 8px; }
+.op-figures { margin-bottom: 10px; padding: 6px 10px; }
+.op-scores { gap: 16px; margin-bottom: 12px; }
+.op-risks h3 { margin: 4px 0 6px; }
+.op-finding { padding: 4px 0 5px; page-break-inside: avoid; }
+.op-fdetail { font-size: 10px; margin-top: 2px; }
+.op-footer { margin-top: 12px; padding-top: 8px; }
 
-/* Avoid awkward breaks mid-element. */
-.finding,
-.checkrow,
-.client-banner,
-.branded-footer,
-.report-head,
-table.data tr {
-  page-break-inside: avoid;
-}
-.report h3 { page-break-after: avoid; }
-
-/* Keep brand/severity colors when printing to PDF. */
-.badge, .bar, .client-banner, .branded-footer {
+/* Preserve gauge + badge + rule colors when printing to PDF. */
+.gauge, .gauge circle, .gauge text,
+.badge, .op-header, .op-footer {
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }

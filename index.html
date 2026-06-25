@@ -10,15 +10,20 @@
 <body>
   <header class="app-header no-print">
     <div class="brand">
-      <span class="logo">HARP</span>
-      <span class="tagline">Health &amp; Risk Profile</span>
+      <span class="wordmark" id="brand-wordmark">Brookhaven</span>
+      <span class="tagline" id="brand-tagline">Wealth &amp; Risk Advisory</span>
     </div>
-    <div class="header-firm" id="header-firm"><!-- firm name injected from config --></div>
+    <span class="app-tag">HARP · Health &amp; Risk Profile</span>
   </header>
 
-  <main class="layout">
-    <!-- ============ INPUT FORM ============ -->
-    <section class="panel form-panel no-print">
+  <main class="wrap">
+    <!-- ===================== PAGE 1 · CLIENT INFORMATION ===================== -->
+    <section id="screen-input" class="screen">
+      <div class="screen-head no-print">
+        <h1>Client information</h1>
+        <p class="screen-sub">Fill in what you have. Upload statements (extraction coming soon) or enter values manually. Each section can be collapsed.</p>
+      </div>
+
       <form id="harp-form">
         <div class="client-meta">
           <label>Client / household name
@@ -128,17 +133,22 @@
           </div>
         </section>
 
-        <div class="actions">
-          <button type="submit" class="primary">Assess</button>
+        <div class="actions no-print">
+          <button type="submit" class="primary">Preview report →</button>
           <button type="button" id="load-sample">Load sample</button>
           <button type="button" id="btn-reset">Reset</button>
         </div>
       </form>
     </section>
 
-    <!-- ============ REPORT / DELIVERABLE ============ -->
-    <section class="panel report-panel" id="report" aria-live="polite">
-      <p class="placeholder">Fill in the four sections and click <strong>Assess</strong> to generate the internal analysis.</p>
+    <!-- ===================== PAGE 2 · REPORT PREVIEW ===================== -->
+    <section id="screen-preview" class="screen" hidden>
+      <div class="preview-toolbar no-print">
+        <button type="button" id="back-edit">← Back to edit</button>
+        <span class="preview-label">Preview — this is the one-pager that prints</span>
+        <button type="button" class="primary" id="print-btn">Print / Save as PDF</button>
+      </div>
+      <div id="report" class="onepager"><!-- one-pager injected by report.js --></div>
     </section>
   </main>
 
