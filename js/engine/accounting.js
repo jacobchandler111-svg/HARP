@@ -1,9 +1,23 @@
-// 1040 / accounting inputs. Provides income & dependents to the other engines and surfaces a couple of
-// light tax observations (effective rate; high earner on only the standard deduction). Pure module — no DOM.
+// 1040 / accounting inputs. Provides income & dependents to other engines and surfaces light tax
+// observations (effective rate; and a high earner on only the standard deduction, where the severity
+// scales with the AGI's federal tax bracket). No taxes are calculated. Pure module — no DOM.
 window.HARP = window.HARP || {};
 
 HARP.accounting = (function () {
   var m = function (n) { return HARP.util.money(n); };
+
+  // Marginal federal bracket the AGI falls into (rate %), from the config table; null if unknown.
+  // (Read off AGI per product direction — no tax is calculated.)
+  function marginalBracket(agi, filingStatus, acfg) {
+    var table = (acfg.taxBrackets || {})[filingStatus];
+    if (!table || !(agi > 0)) return null;
+    var rate = table[0][1];
+    for (var i = 0; i < table.length; i++) {
+      if (agi >= table[i][0]) rate = table[i][1];
+      else break;
+    }
+    return rate;
+  }
 
   function analyze(profile, cfg) {
     cfg = cfg || HARP.config;
@@ -17,6 +31,7 @@ HARP.accounting = (function () {
     var filingStatus = profile.filingStatus || '';
     var businessIncome = Number(profile.businessIncome) || 0; // from a scanned return (Phase 2); 0 until then
     var standardDeduction = (acfg.standardDeductions || {})[filingStatus] || 0;
+    var bracket = marginalBracket(agi, filingStatus, acfg);
 
     var effectiveTaxRate = (income > 0 && totalTax > 0) ? (totalTax / income) * 100 : null;
 
@@ -33,19 +48,23 @@ HARP.accounting = (function () {
       });
     }
 
-    // High earner who appears to take only the standard deduction — possible missed tax savings. Inferred
-    // from deductions-to-AGI (income - agi) being no more than the standard deduction. Business income escalates.
-    if (standardDeduction > 0 && income >= (acfg.highIncomeThreshold || Infinity) &&
-        agi > 0 && (income - agi) <= standardDeduction) {
-      var hasBusiness = businessIncome > 0;
+    // In a meaningful bracket but appears to take only the standard deduction — possible missed tax
+    // savings. Severity scales with the bracket: top brackets => critical, otherwise moderate. Inferred
+    // from deductions-to-AGI (income - agi) being no more than the standard deduction.
+    var onlyStandard = standardDeduction > 0 && agi > 0 && (income - agi) <= standardDeduction;
+    if (onlyStandard && bracket != null && bracket >= (acfg.bracketModerateMin || 22)) {
+      var critical = bracket >= (acfg.bracketCriticalMin || 35) || businessIncome > 0;
       findings.push({
         category: 'Accounting / tax',
-        severity: hasBusiness ? 'risk' : 'warn',
-        title: hasBusiness ? 'Business income but only the standard deduction' : 'High income on only the standard deduction',
-        detail: 'Gross income of ' + m(income) + ' but it looks like only the ' + filingStatus + ' standard deduction (' +
-          m(standardDeduction) + ') is being used. ' + (hasBusiness
-            ? 'With business income on the return, relying on the standard deduction likely leaves significant deductions unclaimed — our accounting team should review.'
-            : 'A high earner on just the standard deduction may be missing tax savings — worth a review with our accounting team.')
+        severity: critical ? 'risk' : 'warn',
+        title: 'In the ' + bracket + '% tax bracket on only the standard deduction',
+        detail: 'AGI of ' + m(agi) + ' falls in the ' + bracket + '% federal bracket (' + filingStatus +
+          '), but it looks like only the standard deduction (' + m(standardDeduction) + ') is being used. ' +
+          (businessIncome > 0
+            ? 'With business income on the return, relying on the standard deduction likely leaves real deductions unclaimed — our accounting team should review.'
+            : critical
+              ? 'At this income there is real potential for tax savings — itemized, retirement, or business deductions and other planning. Our accounting team should review.'
+              : 'There may be deductions or tax savings worth exploring — our accounting team can help.')
       });
     }
 
@@ -57,6 +76,7 @@ HARP.accounting = (function () {
       filingStatus: filingStatus,
       effectiveTaxRate: effectiveTaxRate,
       standardDeduction: standardDeduction,
+      taxBracket: bracket,
       findings: findings
     };
   }

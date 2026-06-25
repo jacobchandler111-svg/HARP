@@ -63,13 +63,23 @@ HARP.config = {
   // Accounting / 1040
   accounting: {
     highEffectiveRatePct: 25,        // effective tax rate above this prompts a tax-efficiency note
-    highIncomeThreshold: 150000,     // gross income at/above this + only the standard deduction => possible missed savings
     // IRS standard deduction by filing status (tax year 2025, OBBBA-adjusted). Refresh each tax year.
     standardDeductions: {
       'Single': 15750,
       'Married filing jointly': 31500,
       'Married filing separately': 15750,
       'Head of household': 23625
+    },
+    // "In a high bracket on only the standard deduction" severity: flag at/above the moderate bracket,
+    // critical at/above the critical bracket. The bracket is read off AGI (no tax is calculated).
+    bracketModerateMin: 22,
+    bracketCriticalMin: 35,
+    // 2025 federal marginal brackets by filing status: [AGI lower bound, rate %]. Refresh each tax year.
+    taxBrackets: {
+      'Single':                    [[0,10],[11925,12],[48475,22],[103350,24],[197300,32],[250525,35],[626350,37]],
+      'Married filing jointly':    [[0,10],[23850,12],[96950,22],[206700,24],[394600,32],[501050,35],[751600,37]],
+      'Married filing separately': [[0,10],[11925,12],[48475,22],[103350,24],[197300,32],[250525,35],[375800,37]],
+      'Head of household':         [[0,10],[17000,12],[64850,22],[103350,24],[197300,32],[250500,35],[626350,37]]
     }
   },
 
