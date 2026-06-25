@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HARP — Health &amp; Risk Profile</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/print.css" media="print" />
+</head>
+<body>
+  <header class="app-header no-print">
+    <div class="brand">
+      <span class="logo">HARP</span>
+      <span class="tagline">Health &amp; Risk Profile</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- ============ INPUT FORM ============ -->
+    <section class="panel form-panel no-print">
+      <form id="harp-form">
+        <fieldset>
+          <legend>Household</legend>
+          <div class="grid">
+            <label>Client / household name
+              <input type="text" id="name" placeholder="e.g. The Smith Family" />
+            </label>
+            <label>Annual income ($)
+              <input type="number" id="income" min="0" step="1000" placeholder="150000" />
+            </label>
+            <label>Dependents
+              <input type="number" id="dependents" min="0" step="1" placeholder="2" />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Investments</legend>
+          <table class="holdings" id="holdings">
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Name</th>
+                <th>Sector</th>
+                <th class="num">Value ($)</th>
+                <th aria-label="Remove"></th>
+              </tr>
+            </thead>
+            <tbody id="holdings-body"><!-- rows injected by app.js --></tbody>
+          </table>
+          <button type="button" class="link-btn" id="add-holding">+ Add holding</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>Accounts &amp; tax</legend>
+          <p class="hint">Investable assets by tax treatment.</p>
+          <div class="grid">
+            <label>Taxable ($)
+              <input type="number" id="taxable" min="0" step="1000" placeholder="0" />
+            </label>
+            <label>Tax-deferred — 401k/IRA ($)
+              <input type="number" id="taxDeferred" min="0" step="1000" placeholder="0" />
+            </label>
+            <label>Tax-free — Roth/HSA ($)
+              <input type="number" id="taxFree" min="0" step="1000" placeholder="0" />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Insurance</legend>
+          <div class="grid">
+            <label>Life insurance coverage ($)
+              <input type="number" id="lifeCoverage" min="0" step="1000" placeholder="250000" />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Legal / estate</legend>
+          <div class="checklist">
+            <label><input type="checkbox" id="legal-will" /> Will</label>
+            <label><input type="checkbox" id="legal-poa" /> Financial power of attorney</label>
+            <label><input type="checkbox" id="legal-healthcare" /> Healthcare directive / medical POA</label>
+            <label><input type="checkbox" id="legal-beneficiaries" /> Beneficiaries reviewed (last 12 mo.)</label>
+            <label><input type="checkbox" id="legal-trust" /> Living trust (if applicable)</label>
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <button type="submit" class="primary">Assess</button>
+          <button type="button" id="load-sample">Load sample</button>
+          <button type="button" id="reset">Reset</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ============ REPORT / DELIVERABLE ============ -->
+    <section class="panel report-panel" id="report" aria-live="polite">
+      <p class="placeholder">Fill in the profile and click <strong>Assess</strong> to generate a recommendation report.</p>
+    </section>
+  </main>
+
+  <!-- Scripts: order matters (config/util/data first, then engine, then UI). -->
+  <script src="js/config.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/data/sectors.js"></script>
+  <script src="js/data/sample.js"></script>
+  <script src="js/engine/concentration.js"></script>
+  <script src="js/engine/insurance.js"></script>
+  <script src="js/engine/tax.js"></script>
+  <script src="js/engine/legal.js"></script>
+  <script src="js/engine/assessment.js"></script>
+  <script src="js/ui/app.js"></script>
+</body>
+</html>

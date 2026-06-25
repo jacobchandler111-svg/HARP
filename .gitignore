@@ -1,0 +1,43 @@
+# ---------------------------------------------------------------------------
+# HARP .gitignore
+# ---------------------------------------------------------------------------
+
+# 🔒 NEVER commit real client / household data. Keep any real profiles out of git.
+/data/clients/
+*.client.json
+*.private.json
+*.real.*
+secrets.json
+
+# Environment / secrets (relevant once a backend or API keys are introduced)
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Dependencies (relevant once tooling is added)
+node_modules/
+package-lock.json.bak
+.venv/
+__pycache__/
+*.pyc
+
+# Build / output
+dist/
+build/
+*.pdf
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+
+# OS cruft
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+*.log

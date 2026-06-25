@@ -1,0 +1,42 @@
+/* Print / "Save as PDF" styles — this is the actual deliverable.
+   Hides the input form and chrome, leaving just the recommendation report. */
+@page {
+  size: letter;
+  margin: 18mm 16mm;
+}
+
+.no-print,
+.form-panel,
+.app-header,
+.report-actions {
+  display: none !important;
+}
+
+body { background: #fff; color: #000; }
+
+.layout {
+  display: block;
+  padding: 0;
+}
+
+.report-panel {
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  max-width: 100%;
+}
+
+/* Keep findings and tables from splitting awkwardly across pages */
+.finding,
+.checkrow,
+table.data tr {
+  page-break-inside: avoid;
+}
+
+.report h3 {
+  page-break-after: avoid;
+}
+
+.disclaimer {
+  position: running(footer);
+}
