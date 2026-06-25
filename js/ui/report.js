@@ -48,8 +48,8 @@ HARP.ui.report = (function () {
   // `empty` => gray ring with "information needed".
   function gauge(score, size, label, empty) {
     var cx = size / 2;
-    var stroke = size < 100 ? 6 : 9;          // ~33% thinner than before (was 9 / 13)
-    var ts = size < 100 ? 6 : 8;              // triangle size
+    var stroke = size < 150 ? 5 : 6;          // thin rings; the larger diameter carries the size
+    var ts = size < 150 ? 6 : 7;              // triangle size
     var r = (size / 2) - (stroke / 2) - ts - 4;
     var head = '<svg class="gauge" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size +
       '" role="img" aria-label="' + esc(label || '') + (empty ? ' information needed' : ' score ' + Math.round(score) + ' of 100') + '">';
@@ -68,7 +68,7 @@ HARP.ui.report = (function () {
       zoneArc(cx, r, stroke, 80 + g / 2, 100 - g / 2, ZONE_GREEN) +
       marker(cx, r, stroke, ts, score) +
       '<text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" class="gauge-num" ' +
-      'style="font-size:' + (size < 100 ? 19 : 36) + 'px">' + score + '</text>' +
+      'style="font-size:' + Math.round(size * 0.2) + 'px">' + score + '</text>' +
       '</svg>';
   }
 
@@ -93,7 +93,7 @@ HARP.ui.report = (function () {
   }
 
   // Circles only — exec summary moved to its own section. Sizes are ~25% larger than before.
-  function scores(cats, filled, overall) {
+  function scores(a, cats, filled, overall) {
     var catHtml = cats.map(function (c) {
       var ok = filled[c.key];
       return '<div class="op-cat">' + gauge(ok ? c.score : null, 120, c.label, !ok) +
@@ -104,6 +104,7 @@ HARP.ui.report = (function () {
       '<div class="op-overall-row">' +
         '<div class="op-overall">' + gauge(overall, 188, 'Overall', overall === null) +
           '<div class="op-overall-label">Overall health</div></div>' +
+        '<div class="op-exec"><h4 class="op-exec-h">Executive summary</h4>' + execSummary(a, overall, cats, filled) + '</div>' +
       '</div>' +
       '</div>';
   }
@@ -222,12 +223,17 @@ HARP.ui.report = (function () {
     return '<div class="op-risks"><h3>Key risks</h3>' + body + '</div>';
   }
   // Recommendations: the suggested actions (each finding's detail), in their own section.
+  // Use the last sentence of the detail — usually the actionable recommendation — to keep it short.
+  function shortAction(detail) {
+    var m = String(detail || '').match(/[^.!?]+[.!?]+/g);
+    return (m && m.length) ? m[m.length - 1].trim() : (detail || '');
+  }
   function recommendations(a, filled) {
     var s = severityFindings(a, filled);
     if (!s.shown.length && !s.trimmed) return '';
     var body = s.shown.map(function (f) {
       return '<div class="op-rec"><span class="op-rec-title">' + esc(f.title) + '</span>' +
-        '<span class="op-rec-detail">' + esc(f.detail) + '</span></div>';
+        '<span class="op-rec-detail">' + esc(shortAction(f.detail)) + '</span></div>';
     }).join('');
     if (s.trimmed > 0) {
       body += '<div class="op-trim">+ ' + s.trimmed + ' minor note' + (s.trimmed === 1 ? '' : 's') +
@@ -263,8 +269,7 @@ HARP.ui.report = (function () {
 
     document.getElementById('report').innerHTML =
       header(a) +
-      scores(cats, filled, overall) +
-      '<div class="op-exec-block"><h3>Executive summary</h3>' + execSummary(a, overall, cats, filled) + '</div>' +
+      scores(a, cats, filled, overall) +
       keyRisks(a, filled) +
       recommendations(a, filled) +
       footer();

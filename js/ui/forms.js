@@ -53,7 +53,6 @@ HARP.ui.forms = (function () {
       '<td><input type="text" class="h-ticker" value="' + esc(h.ticker) + '" placeholder="AAPL" /></td>' +
       '<td><select class="h-sector">' + sectorOptions(h.sector) + '</select></td>' +
       '<td class="num"><input type="text" inputmode="decimal" class="h-value dollar" value="' + esc(commaFmt(h.value)) + '" placeholder="0" /></td>' +
-      '<td class="num h-basis">' + (h.costBasis != null && h.costBasis !== '' ? '$' + commaFmt(h.costBasis) : '—') + '</td>' +
       '<td><button type="button" class="icon-btn" title="Remove">&times;</button></td>';
     $('holdings-body').appendChild(tr);
 
@@ -74,7 +73,7 @@ HARP.ui.forms = (function () {
       var ticker = tr.querySelector('.h-ticker').value.trim();
       if (value <= 0 && !ticker) return; // skip empty rows
       var basis = tr.dataset.costBasis;
-      out.push({ ticker: ticker, name: (HARP.sectors.nameOf && HARP.sectors.nameOf(ticker)) || ticker,
+      out.push({ ticker: ticker, name: ticker,
         sector: tr.querySelector('.h-sector').value, value: value,
         costBasis: (basis == null || basis === '') ? '' : (parseFloat(basis) || 0) });
     });
@@ -85,10 +84,10 @@ HARP.ui.forms = (function () {
   function perfYear() { return new Date().getFullYear() - 1; }
   function buildPerformanceInputs() {
     $('performance-inputs').innerHTML =
+      '<label>Total portfolio value ($)' +
+        '<input type="text" inputmode="decimal" class="dollar" id="portfolioValue" placeholder="0" /></label>' +
       '<label>' + perfYear() + ' portfolio performance' +
-        '<span class="pct-field"><input type="number" id="yearReturnPct" step="0.1" placeholder="e.g. 12.5" /><span class="pct-suffix">%</span></span></label>' +
-      '<label>Total portfolio value ($) <span class="opt">(if no holdings entered)</span>' +
-        '<input type="text" inputmode="decimal" class="dollar" id="portfolioValue" placeholder="0" /></label>';
+        '<span class="pct-field"><input type="number" id="yearReturnPct" step="0.1" placeholder="e.g. 12.5" /><span class="pct-suffix">%</span></span></label>';
   }
 
   // ---------------------------------------------------------------- insurance

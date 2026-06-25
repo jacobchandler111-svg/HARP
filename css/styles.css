@@ -120,11 +120,12 @@ button:hover { filter: brightness(0.97); }
 .op-cats { display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-around; margin-bottom: 16px; }
 .op-cat { text-align: center; }
 .op-cat-label { font-family: var(--font-mono); font-size: 11px; color: var(--brand-ink); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-top: 6px; }
-.op-overall-row { display: flex; align-items: center; justify-content: center; gap: 22px; border-top: 1px solid var(--line); padding-top: 14px; }
+.op-overall-row { display: flex; align-items: center; gap: 24px; border-top: 1px solid var(--line); padding-top: 14px; }
 .op-overall { text-align: center; flex-shrink: 0; }
 .op-overall-label { font-family: var(--font-display); font-weight: 600; color: var(--brand-ink); margin-top: 4px; }
 .op-exec { flex: 1; font-size: 13.5px; color: var(--ink); line-height: 1.55; }
 .op-exec p { margin: 0; }
+.op-exec-h { font-family: var(--font-display); font-size: 15px; color: var(--brand-ink); margin: 0 0 6px; }
 .gauge { display: block; margin: 0 auto; }
 .gauge-num { font-family: var(--font-mono); font-weight: 600; fill: var(--ink); }
 
@@ -171,7 +172,7 @@ button:hover { filter: brightness(0.97); }
 .h-basis { color: var(--muted); font-size: 13px; }
 
 /* report: HARP wordmark (right header), executive summary, recommendations */
-.op-harp { font-family: var(--font-display); font-size: 28px; font-weight: 600; color: var(--brand); letter-spacing: 1.5px; line-height: 1; }
+.op-harp { font-family: var(--font-display); font-size: 28px; font-weight: 600; color: var(--brand-ink); letter-spacing: 1.5px; line-height: 1; }
 .op-exec-block p { font-size: 13.5px; color: var(--ink); line-height: 1.55; margin: 0; }
 .op-rec { padding: 7px 0 9px; border-bottom: 1px dotted var(--line); }
 .op-rec-title { display: block; font-weight: 600; font-size: 13px; color: var(--brand-ink); }
