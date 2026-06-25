@@ -19,7 +19,7 @@ body { background: #fff; color: #000; }
 .onepager { border: none; border-radius: 0; box-shadow: none; padding: 0; font-size: 12px; }
 
 /* Keep these blocks intact across the page break (allows a clean 2nd page). */
-.op-header, .op-scores, .op-finding, .op-footer { page-break-inside: avoid; }
+.op-header, .op-cats, .op-overall-row, .op-finding, .op-footer { page-break-inside: avoid; }
 .op-risks h3 { page-break-after: avoid; }
 
 /* Preserve gauge + badge + rule colors when printing to PDF. */

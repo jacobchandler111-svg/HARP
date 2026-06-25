@@ -49,6 +49,10 @@ HARP.config = {
     umbrella: {
       recommendAboveAssets: 500000,  // recommend umbrella once estimated assets exceed this
       minCoverageBand: 1.0           // umbrella should be >= ~1x estimated assets
+    },
+    // Life face amount vs total liabilities — sliding-scale severity
+    liabilityCoverage: {
+      significantShortfallBand: 0.5  // face covering < 50% of liabilities => significantly under (risk); 50-99% => slightly under (warn)
     }
   },
 
@@ -60,6 +64,12 @@ HARP.config = {
   // Accounting / 1040
   accounting: {
     highEffectiveRatePct: 25         // effective tax rate above this prompts a tax-efficiency note
+  },
+
+  // Legal / estate
+  legal: {
+    assetProtectionTrustThreshold: 5000000,  // assets above this with no asset-protection trust => liability risk
+    reviewStaleYears: 5                       // a will/trust not reviewed within this many years => flagged as stale
   },
 
   // Overall score deductions (out of 100)
