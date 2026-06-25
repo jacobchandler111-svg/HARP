@@ -56,15 +56,7 @@
             <button type="button" class="link-btn" id="add-holding">+ Add holding</button>
 
             <h4 class="sub">Portfolio performance</h4>
-            <p class="hint">Enter the portfolio's most recent full-year return; it's compared to the assumed market return and the actual S&amp;P 500 3-year annualized.</p>
-            <div class="grid" id="performance-inputs"><!-- year fields injected by forms.js --></div>
-
-            <h4 class="sub">Account balances by tax treatment</h4>
-            <div class="grid">
-              <label>Taxable ($)<input type="text" inputmode="decimal" class="dollar" id="taxable" placeholder="0" /></label>
-              <label>Tax-deferred — 401k/IRA ($)<input type="text" inputmode="decimal" class="dollar" id="taxDeferred" placeholder="0" /></label>
-              <label>Tax-free — Roth/HSA ($)<input type="text" inputmode="decimal" class="dollar" id="taxFree" placeholder="0" /></label>
-            </div>
+            <div class="grid" id="performance-inputs"><!-- year field injected by forms.js --></div>
           </div>
         </section>
 
@@ -93,8 +85,7 @@
                 </select>
               </label>
               <label>Annual gross income ($)<input type="text" inputmode="decimal" class="dollar" id="income" placeholder="0" /></label>
-              <label>Annual adjusted gross income — AGI ($)<input type="text" inputmode="decimal" class="dollar" id="agi" placeholder="0" /></label>
-              <label>Dependents<input type="number" id="dependents" min="0" step="1" placeholder="0" /></label>
+              <label>Annual adjusted gross income ($)<input type="text" inputmode="decimal" class="dollar" id="agi" placeholder="0" /></label>
             </div>
           </div>
         </section>
@@ -111,9 +102,8 @@
               <label>Total assets ($)<input type="text" inputmode="decimal" class="dollar" id="assets" placeholder="0" /></label>
               <label>Total liabilities ($)<input type="text" inputmode="decimal" class="dollar" id="liabilities" placeholder="0" /></label>
             </div>
-            <div class="grid">
-              <label>Years until retirement<input type="number" id="yearsToRetirement" min="0" step="1" placeholder="e.g. 20" /></label>
-            </div>
+            <div class="q-row"><span class="q-label">How many years until retirement?</span>
+              <input type="number" class="q-num" id="yearsToRetirement" min="0" step="1" placeholder="0" /></div>
             <div id="insurance-inputs"><!-- policy questions injected by forms.js --></div>
           </div>
         </section>

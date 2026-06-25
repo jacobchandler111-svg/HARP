@@ -139,9 +139,8 @@ HARP.ui.report = (function () {
                    (a.concentration && a.concentration.total > 0)),
       tax: !!((a.tax && a.tax.total > 0) || (Number(p.income) || 0) > 0 ||
            (Number(p.agi) || 0) > 0 || (Number(p.totalTax) || 0) > 0),
-      insurance: !!((ins.life && ins.life.has) || (ins.disability && ins.disability.has) ||
-                 (ins.property && ins.property.has) || (ins.umbrella && ins.umbrella.has) ||
-                 ins.ownsHome || (Number(ins.homeValue) || 0) > 0),
+      insurance: !!(ins.hasPolicies || (ins.policyTypes && ins.policyTypes.length) ||
+                 (Number(ins.totalFaceValue) || 0) > 0),
       legal: !!(p.legal && Object.keys(p.legal).some(function (k) { return p.legal[k]; }))
     };
   }
@@ -234,10 +233,19 @@ HARP.ui.report = (function () {
 
   function footer() {
     var b = HARP.config.branding;
-    var contact = [b.firmName, b.contact.phone, b.contact.email, b.contact.website]
+    var firm = b.firmName || 'Brookhaven';
+    var contact = [firm + ' · Integrated Wealth Solutions', b.contact.phone, b.contact.email, b.contact.website]
       .filter(Boolean).map(esc).join(' · ');
-    return '<div class="op-footer"><div class="op-contact">' + contact + '</div>' +
-      '<div class="op-disc">' + esc(b.disclaimer) + '</div></div>';
+    var disc = 'This Health & Risk Profile is provided by ' + firm + ' for informational and educational ' +
+      'purposes only and does not constitute financial, investment, tax, legal, or insurance advice, nor an ' +
+      'offer or solicitation to buy or sell any security or product. Figures are estimates based on the ' +
+      'information provided and on general assumptions that may not reflect your specific circumstances, and ' +
+      'are not guarantees of future results. Investing involves risk, including possible loss of principal. ' +
+      'Make insurance, tax, and estate decisions only after consulting appropriately licensed professionals.';
+    return '<div class="op-footer">' +
+      '<div class="op-contact">' + contact + '</div>' +
+      '<div class="op-disc"><strong>Disclosures.</strong> ' + esc(disc) + ' Prepared ' + today() + '.</div>' +
+      '</div>';
   }
 
   function render(a) {
