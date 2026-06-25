@@ -51,9 +51,9 @@ HARP.ui.forms = (function () {
     tr.dataset.costBasis = (h.costBasis == null ? '' : h.costBasis);
     tr.innerHTML =
       '<td><input type="text" class="h-ticker" value="' + esc(h.ticker) + '" placeholder="AAPL" /></td>' +
-      '<td><input type="text" class="h-name" value="' + esc(h.name) + '" placeholder="Apple Inc." /></td>' +
       '<td><select class="h-sector">' + sectorOptions(h.sector) + '</select></td>' +
       '<td class="num"><input type="text" inputmode="decimal" class="h-value dollar" value="' + esc(commaFmt(h.value)) + '" placeholder="0" /></td>' +
+      '<td class="num h-basis">' + (h.costBasis != null && h.costBasis !== '' ? '$' + commaFmt(h.costBasis) : '—') + '</td>' +
       '<td><button type="button" class="icon-btn" title="Remove">&times;</button></td>';
     $('holdings-body').appendChild(tr);
 
@@ -71,11 +71,11 @@ HARP.ui.forms = (function () {
     var out = [];
     $('holdings-body').querySelectorAll('tr').forEach(function (tr) {
       var value = parseFloat(cleanNum(tr.querySelector('.h-value').value)) || 0;
-      var name = tr.querySelector('.h-name').value.trim();
       var ticker = tr.querySelector('.h-ticker').value.trim();
-      if (value <= 0 && !name && !ticker) return; // skip empty rows
+      if (value <= 0 && !ticker) return; // skip empty rows
       var basis = tr.dataset.costBasis;
-      out.push({ ticker: ticker, name: name, sector: tr.querySelector('.h-sector').value, value: value,
+      out.push({ ticker: ticker, name: (HARP.sectors.nameOf && HARP.sectors.nameOf(ticker)) || ticker,
+        sector: tr.querySelector('.h-sector').value, value: value,
         costBasis: (basis == null || basis === '') ? '' : (parseFloat(basis) || 0) });
     });
     return out;
@@ -85,8 +85,10 @@ HARP.ui.forms = (function () {
   function perfYear() { return new Date().getFullYear() - 1; }
   function buildPerformanceInputs() {
     $('performance-inputs').innerHTML =
-      '<label>' + perfYear() + ' portfolio performance (%)' +
-      '<input type="number" id="yearReturnPct" step="0.1" placeholder="e.g. 12.5" /></label>';
+      '<label>' + perfYear() + ' portfolio performance' +
+        '<span class="pct-field"><input type="number" id="yearReturnPct" step="0.1" placeholder="e.g. 12.5" /><span class="pct-suffix">%</span></span></label>' +
+      '<label>Total portfolio value ($) <span class="opt">(if no holdings entered)</span>' +
+        '<input type="text" inputmode="decimal" class="dollar" id="portfolioValue" placeholder="0" /></label>';
   }
 
   // ---------------------------------------------------------------- insurance
@@ -101,12 +103,12 @@ HARP.ui.forms = (function () {
   }
   function buildInsuranceInputs() {
     $('insurance-inputs').innerHTML =
-      yesNoToggle('ins-hasPolicies', 'Do you have any insurance policies?') +
+      yesNoToggle('ins-hasPolicies', 'Do you have an insurance policy?') +
       '<div class="q-followup" id="ins-policies-followup" hidden>' +
-        '<label>What policies? <span class="opt">(select all that apply)</span>' +
-          '<select id="ins-policyTypes" multiple size="4">' + policyTypeOptions() + '</select></label>' +
         '<label>Total payout (face value) across all policies ($)' +
           '<input type="text" inputmode="decimal" class="dollar" id="ins-totalFaceValue" placeholder="0" /></label>' +
+        '<div class="q-row q-sub"><span class="q-label">How many years ago was the policy issued or last reviewed?</span>' +
+          '<input type="number" class="q-num" id="ins-policyAgeYears" min="0" step="1" placeholder="0" /></div>' +
       '</div>';
     $('insurance-inputs').addEventListener('change', function (e) {
       if (e.target && /^ins-hasPolicies-(yes|no)$/.test(e.target.id)) syncInsuranceCascade();
@@ -116,15 +118,15 @@ HARP.ui.forms = (function () {
   function readInsurance() {
     return {
       hasPolicies: nameBool('ins-hasPolicies'),
-      policyTypes: selectedValues($('ins-policyTypes')),
-      totalFaceValue: num('ins-totalFaceValue')
+      totalFaceValue: num('ins-totalFaceValue'),
+      policyAgeYears: numOrBlank('ins-policyAgeYears')
     };
   }
   function loadInsurance(ins) {
     ins = ins || {};
     setNameBool('ins-hasPolicies', !!ins.hasPolicies);
-    setMultiSelect($('ins-policyTypes'), ins.policyTypes);
     setVal('ins-totalFaceValue', ins.totalFaceValue);
+    setVal('ins-policyAgeYears', ins.policyAgeYears);
     syncInsuranceCascade();
   }
 
@@ -207,7 +209,7 @@ HARP.ui.forms = (function () {
         '<div class="subq-label">What type(s) of trust? <span class="opt">(select all that apply)</span></div>' +
         '<div class="trust-types">' + trustTypeChecks() + '</div>' +
         '<div class="q-followup" id="legal-trustReviewed-followup" hidden>' +
-          '<div class="q-row q-sub"><span class="q-label">How many years since your trust(s) were reviewed?</span>' +
+          '<div class="q-row q-sub"><span class="q-label">Years since your trusts were last reviewed (use the longest)</span>' +
             '<input type="number" class="q-num" id="legal-trustReviewedYears" min="0" step="1" placeholder="0" /></div>' +
         '</div>' +
       '</div>' +
@@ -274,6 +276,7 @@ HARP.ui.forms = (function () {
       taxDeferred: num('taxDeferred'),
       taxFree: num('taxFree'),
       yearReturnPct: numOrBlank('yearReturnPct'),
+      portfolioValue: num('portfolioValue'),
       holdings: readHoldings(),
       assets: num('assets'),
       liabilities: num('liabilities'),
@@ -287,6 +290,7 @@ HARP.ui.forms = (function () {
     setVal('income', p.income); setVal('agi', p.agi); setVal('totalTax', p.totalTax); setVal('dependents', p.dependents);
     setVal('taxable', p.taxable); setVal('taxDeferred', p.taxDeferred); setVal('taxFree', p.taxFree);
     setVal('yearReturnPct', p.yearReturnPct);
+    setVal('portfolioValue', p.portfolioValue);
 
     $('holdings-body').innerHTML = '';
     (p.holdings || []).forEach(addHoldingRow);

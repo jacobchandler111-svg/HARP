@@ -49,7 +49,7 @@
             <h4 class="sub">Holdings</h4>
             <table class="holdings" id="holdings">
               <thead>
-                <tr><th>Ticker</th><th>Name</th><th>Sector</th><th class="num">Value ($)</th><th aria-label="Remove"></th></tr>
+                <tr><th>Ticker</th><th>Sector</th><th class="num">Value ($)</th><th class="num">Cost basis</th><th aria-label="Remove"></th></tr>
               </thead>
               <tbody id="holdings-body"><!-- rows injected by forms.js --></tbody>
             </table>
@@ -64,12 +64,12 @@
         <section class="accordion-item" data-section="accounting">
           <button type="button" class="accordion-header" aria-expanded="true">
             <span class="chev" aria-hidden="true">▾</span>
-            <span class="acc-title">2 · Accounting statement</span>
+            <span class="acc-title">2 · Tax return</span>
           </button>
           <div class="accordion-body">
             <div class="dropzone" data-upload="accounting">
               <input type="file" class="dz-input" multiple accept=".pdf,.png,.jpg,.jpeg" hidden />
-              <p class="dz-text">Drag &amp; drop the accounting statement here, or
+              <p class="dz-text">Drag &amp; drop the tax return here, or
                 <button type="button" class="link-btn dz-browse">browse</button></p>
               <p class="dz-note">Automatic extraction arrives in Phase 2 — for now, enter values manually below.</p>
               <ul class="dz-files"></ul>

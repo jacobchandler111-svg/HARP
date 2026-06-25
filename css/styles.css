@@ -165,3 +165,7 @@ button:hover { filter: brightness(0.97); }
 /* "How many years since reviewed" — number on the right, like the Yes/No toggle. */
 .q-row.q-sub { background: transparent; border: none; box-shadow: none; padding: 6px 2px; margin-bottom: 0; }
 .q-num { width: 84px; text-align: right; flex-shrink: 0; }
+.pct-field { display: inline-flex; align-items: center; gap: 6px; }
+.pct-field input { width: 120px; }
+.pct-suffix { color: var(--muted); font-weight: 600; }
+.h-basis { color: var(--muted); font-size: 13px; }
