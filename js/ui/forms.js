@@ -118,73 +118,120 @@ HARP.ui.forms = (function () {
   }
 
   // ---------------------------------------------------------------- legal
-  function trustTypeOptions() {
+  // Nicer question phrasing per essential-document key (falls back to the engine's label).
+  var LEGAL_Q = {
+    poa: 'Have you designated a financial power of attorney?',
+    healthcare: 'Do you have a healthcare directive / medical POA?',
+    beneficiaries: 'Have your beneficiary designations been reviewed in the last 12 months?',
+    guardianship: 'Have you designated a guardian for any minor children?',
+    assetInventory: 'Do you have an asset inventory / letter of instruction?'
+  };
+  // "How long since reviewed" dropdown. Values are representative year counts so the engine's
+  // reviewSeverity (>5 => risk, >3 => warn) reads them directly.
+  function reviewOptions() {
+    return '<option value="">Select…</option>' +
+      '<option value="1">Within the last year</option>' +
+      '<option value="2">1–3 years ago</option>' +
+      '<option value="4">3–5 years ago</option>' +
+      '<option value="8">More than 5 years ago</option>' +
+      '<option value="99">Never reviewed</option>';
+  }
+  // A "question on the left, Yes / No toggle on the right" row, backed by a radio pair.
+  function yesNoRow(key, question) {
+    var n = 'legal-' + key;
+    return '<div class="q-row">' +
+      '<span class="q-label">' + esc(question) + '</span>' +
+      '<span class="yesno" role="radiogroup" aria-label="' + esc(question) + '">' +
+        '<input type="radio" name="' + n + '" id="' + n + '-yes" value="1">' +
+        '<label for="' + n + '-yes">Yes</label>' +
+        '<input type="radio" name="' + n + '" id="' + n + '-no" value="0" checked>' +
+        '<label for="' + n + '-no">No</label>' +
+      '</span></div>';
+  }
+  function trustTypeChecks() {
     return HARP.legal.TRUST_TYPES.map(function (t) {
-      return '<option value="' + esc(t.key) + '">' + esc(t.label) + '</option>';
+      return '<label class="trust-type-opt"><input type="checkbox" class="trust-type" value="' + esc(t.key) + '"> ' + esc(t.label) + '</label>';
     }).join('');
   }
+  function radioBool(key) { var e = $('legal-' + key + '-yes'); return !!(e && e.checked); }
+  function setRadioBool(key, v) {
+    var y = $('legal-' + key + '-yes'), n = $('legal-' + key + '-no');
+    if (y) y.checked = !!v;
+    if (n) n.checked = !v;
+  }
+  function trustTypesChecked() {
+    return Array.prototype.map.call(document.querySelectorAll('#legal-checklist .trust-type:checked'),
+      function (c) { return c.value; });
+  }
+
   function syncLegalCascade() {
-    var will = $('legal-will'), trust = $('legal-trust'), types = $('legal-trustTypes');
-    if (will) $('legal-will-followup').hidden = !will.checked;
-    if (trust) {
-      $('legal-trust-followup').hidden = !trust.checked;
-      var anyType = trust.checked && selectedValues(types).length > 0;
-      $('legal-trustReviewed-followup').hidden = !anyType;
-    }
+    var wf = $('legal-will-followup');
+    if (wf) wf.hidden = !radioBool('will');
+    var trustOn = radioBool('trust');
+    var tf = $('legal-trust-followup');
+    if (tf) tf.hidden = !trustOn;
+    var tr = $('legal-trustReviewed-followup');
+    if (tr) tr.hidden = !(trustOn && trustTypesChecked().length > 0);
   }
   function wireLegalCascade() {
-    ['legal-will', 'legal-trust', 'legal-trustTypes'].forEach(function (id) {
-      var el = $(id);
-      if (el) el.addEventListener('change', syncLegalCascade);
+    // Radios + trust-type checkboxes are injected, so delegate from the container.
+    $('legal-checklist').addEventListener('change', function (e) {
+      var t = e.target;
+      if (!t) return;
+      if (/^legal-(will|trust)-(yes|no)$/.test(t.id) || (t.classList && t.classList.contains('trust-type'))) {
+        syncLegalCascade();
+      }
     });
   }
   function buildLegalChecklist() {
-    var essentials = HARP.legal.ESSENTIALS.map(function (item) {
-      return '<label><input type="checkbox" id="legal-' + item.key + '" /> ' + esc(item.label) +
-        (item.optional ? ' <span class="opt">(optional)</span>' : '') + '</label>';
-    }).join('');
+    var rest = HARP.legal.ESSENTIALS
+      .filter(function (item) { return item.key !== 'poa'; })
+      .map(function (item) { return yesNoRow(item.key, LEGAL_Q[item.key] || ('Do you have ' + item.label.toLowerCase() + '?')); })
+      .join('');
 
     $('legal-checklist').innerHTML =
-      '<div class="legal-q">' +
-        '<label><input type="checkbox" id="legal-will" /> Will</label>' +
-        '<div class="legal-followup" id="legal-will-followup" hidden>' +
-          '<label>Years since the will was last reviewed<input type="number" id="legal-willReviewedYears" min="0" step="1" placeholder="e.g. 3" /></label>' +
+      yesNoRow('will', 'Do you have a will?') +
+      '<div class="q-followup" id="legal-will-followup" hidden>' +
+        '<label>How long since your will was last reviewed?' +
+          '<select id="legal-willReviewedYears">' + reviewOptions() + '</select></label>' +
+      '</div>' +
+      yesNoRow('poa', LEGAL_Q.poa) +
+      yesNoRow('trust', 'Do you have a trust set up?') +
+      '<div class="q-followup" id="legal-trust-followup" hidden>' +
+        '<div class="subq-label">What type(s) of trust? <span class="opt">(select all that apply)</span></div>' +
+        '<div class="trust-types">' + trustTypeChecks() + '</div>' +
+        '<div class="q-followup" id="legal-trustReviewed-followup" hidden>' +
+          '<label>How long since your trust(s) were last reviewed?' +
+            '<select id="legal-trustReviewedYears">' + reviewOptions() + '</select></label>' +
         '</div>' +
       '</div>' +
-      '<div class="legal-q">' +
-        '<label><input type="checkbox" id="legal-trust" /> Trust set up</label>' +
-        '<div class="legal-followup" id="legal-trust-followup" hidden>' +
-          '<label>Type(s) of trust <span class="opt">(select all that apply)</span>' +
-            '<select id="legal-trustTypes" multiple size="5">' + trustTypeOptions() + '</select></label>' +
-          '<div class="legal-followup" id="legal-trustReviewed-followup" hidden>' +
-            '<label>Years since the trust(s) were last reviewed<input type="number" id="legal-trustReviewedYears" min="0" step="1" placeholder="e.g. 3" /></label>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="checklist-items">' + essentials + '</div>';
+      rest;
 
     wireLegalCascade();
     syncLegalCascade();
   }
   function readLegal() {
     var out = {
-      will: checked('legal-will'),
+      will: radioBool('will'),
       willReviewedYears: numOrBlank('legal-willReviewedYears'),
-      trust: checked('legal-trust'),
-      trustTypes: selectedValues($('legal-trustTypes')),
+      trust: radioBool('trust'),
+      trustTypes: trustTypesChecked(),
       trustReviewedYears: numOrBlank('legal-trustReviewedYears')
     };
-    HARP.legal.ESSENTIALS.forEach(function (item) { out[item.key] = checked('legal-' + item.key); });
+    HARP.legal.ESSENTIALS.forEach(function (item) { out[item.key] = radioBool(item.key); });
     return out;
   }
   function loadLegal(legal) {
     legal = legal || {};
-    setChecked('legal-will', !!legal.will);
+    setRadioBool('will', !!legal.will);
+    setRadioBool('trust', !!legal.trust);
+    HARP.legal.ESSENTIALS.forEach(function (item) { setRadioBool(item.key, !!legal[item.key]); });
     setVal('legal-willReviewedYears', legal.willReviewedYears);
-    setChecked('legal-trust', !!legal.trust);
-    setMultiSelect($('legal-trustTypes'), legal.trustTypes);
     setVal('legal-trustReviewedYears', legal.trustReviewedYears);
-    HARP.legal.ESSENTIALS.forEach(function (item) { setChecked('legal-' + item.key, !!legal[item.key]); });
+    var types = legal.trustTypes || [];
+    Array.prototype.forEach.call(document.querySelectorAll('#legal-checklist .trust-type'), function (c) {
+      c.checked = types.indexOf(c.value) >= 0;
+    });
     syncLegalCascade();
   }
 
