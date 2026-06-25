@@ -1,10 +1,10 @@
-/* Print / "Save as PDF" — prints ONLY the preview one-pager, tuned to fit a single page. */
+/* Print / "Save as PDF" — prints the preview report; flows across 1-2 pages as needed. */
 @page {
   size: letter;
-  margin: 12mm 12mm;
+  margin: 14mm 14mm;
 }
 
-/* Hide app chrome and the input page — leave just the one-pager. */
+/* Hide app chrome and the input page — leave just the report. */
 .no-print,
 .app-header,
 #screen-input,
@@ -16,19 +16,14 @@ body { background: #fff; color: #000; }
 .wrap { max-width: 100%; margin: 0; padding: 0; }
 #screen-preview { display: block !important; }
 
-/* Flatten the "paper" card and tighten spacing so it lands on one page. */
-.onepager { border: none; border-radius: 0; box-shadow: none; padding: 0; font-size: 11px; }
-.op-header { margin-bottom: 10px; padding-bottom: 8px; }
-.op-figures { margin-bottom: 10px; padding: 6px 10px; }
-.op-scores { gap: 16px; margin-bottom: 12px; }
-.op-risks h3 { margin: 4px 0 6px; }
-.op-finding { padding: 4px 0 5px; page-break-inside: avoid; }
-.op-fdetail { font-size: 10px; margin-top: 2px; }
-.op-footer { margin-top: 12px; padding-top: 8px; }
+.onepager { border: none; border-radius: 0; box-shadow: none; padding: 0; font-size: 12px; }
+
+/* Keep these blocks intact across the page break (allows a clean 2nd page). */
+.op-header, .op-scores, .op-finding, .op-footer { page-break-inside: avoid; }
+.op-risks h3 { page-break-after: avoid; }
 
 /* Preserve gauge + badge + rule colors when printing to PDF. */
-.gauge, .gauge circle, .gauge text,
-.badge, .op-header, .op-footer {
+.gauge, .gauge circle, .gauge text, .badge, .op-header, .op-footer {
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }

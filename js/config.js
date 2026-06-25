@@ -16,8 +16,19 @@ HARP.config = {
   },
 
   // Investment concentration
-  singleStockConcentrationPct: 10,   // flag any one holding above this % of the portfolio
-  sectorConcentrationPct: 30,        // flag any one sector above this % of the portfolio
+  singleStockConcentrationPct: 20,   // flag any one stock above this % of the portfolio (single-name risk)
+  sectorConcentrationPct: 25,        // flag any one sector above this % of the portfolio (sector over-allocation)
+  // Sectors that are diversified or non-equity — excluded from the concentration flags, since an
+  // S&P 500 fund or a cash balance is not single-name or sector risk.
+  nonConcentratingSectors: ['Diversified / Fund', 'Cash & Equivalents'],
+
+  // Investment performance vs the market (trailing 3-year, annualized)
+  performance: {
+    benchmarkName: 'S&P 500',
+    benchmarkReturnPct: 10,   // trailing ~3-year average annual return for the benchmark (tunable; ~10-11% historically)
+    tolerancePct: 1,          // within this many points of the benchmark counts as "in line with the market"
+    severeGapPct: 4           // trailing the benchmark by more than this flags as a risk, not just a watch item
+  },
 
   // Insurance adequacy, by policy type
   insurance: {

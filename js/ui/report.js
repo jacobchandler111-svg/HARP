@@ -6,7 +6,7 @@ HARP.ui = HARP.ui || {};
 HARP.ui.report = (function () {
   var esc = HARP.util.escape, money = HARP.util.money;
   var SEV_ORDER = { risk: 0, warn: 1, info: 2, ok: 3 };
-  var SEV_LABEL = { risk: 'Risk', warn: 'Watch', info: 'Note', ok: 'OK' };
+  var SEV_LABEL = { risk: 'Critical', warn: 'Moderate', info: 'Note', ok: 'OK' };
 
   function today() {
     return new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
@@ -55,6 +55,10 @@ HARP.ui.report = (function () {
     if (a.concentration.total > 0) bits.push('Portfolio ' + money(a.concentration.total));
     if (a.accounting.income > 0) bits.push('Income ' + money(a.accounting.income));
     if (a.tax.total > 0) bits.push('Investable assets ' + money(a.tax.total));
+    if (a.performance && a.performance.provided) {
+      bits.push('3-yr return ' + HARP.util.pct(a.performance.clientReturnPct) +
+        ' vs ' + a.performance.benchmarkName + ' ' + HARP.util.pct(a.performance.benchmarkPct));
+    }
     return bits.length ? '<div class="op-figures">' + bits.map(esc).join(' &nbsp;·&nbsp; ') + '</div>' : '';
   }
 
@@ -78,12 +82,20 @@ HARP.ui.report = (function () {
   }
 
   function risks(a) {
-    var list = a.findings.slice()
-      .filter(function (f) { return f.severity !== 'ok'; })
+    // Client summary shows only critical (risk) + moderate (warn) issues; lower-priority notes
+    // are trimmed (counted in a footnote) so the report stays to ~1-2 pages.
+    var shown = a.findings.slice()
+      .filter(function (f) { return f.severity === 'risk' || f.severity === 'warn'; })
       .sort(function (x, y) { return SEV_ORDER[x.severity] - SEV_ORDER[y.severity]; });
-    var body = list.length
-      ? list.map(findingHtml).join('')
-      : '<p class="op-clean">No material risks identified — this household is in strong shape.</p>';
+    var trimmed = a.findings.filter(function (f) { return f.severity === 'info'; }).length;
+
+    var body = shown.length
+      ? shown.map(findingHtml).join('')
+      : '<p class="op-clean">No critical or moderate issues identified — this household is in strong shape.</p>';
+    if (trimmed > 0) {
+      body += '<div class="op-trim">+ ' + trimmed + ' minor note' + (trimmed === 1 ? '' : 's') +
+        ' reviewed and omitted from this summary.</div>';
+    }
     return '<div class="op-risks"><h3>Key risks &amp; recommendations</h3>' + body + '</div>';
   }
 
