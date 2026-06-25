@@ -44,7 +44,6 @@
     HARP.ui.uploads.init();
 
     $('add-holding').addEventListener('click', function () { HARP.ui.forms.addHoldingRow(); });
-    $('add-policy').addEventListener('click', function () { HARP.ui.forms.addPolicyCard($('policy-type').value); });
 
     $('harp-form').addEventListener('submit', function (e) { e.preventDefault(); preview(); });
     $('load-sample').addEventListener('click', function () { HARP.ui.forms.loadProfile(HARP.sample); preview(); });

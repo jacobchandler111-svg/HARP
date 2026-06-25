@@ -15,11 +15,20 @@ HARP.performance = (function () {
 
     var findings = [];
 
-    // The advisor enters the portfolio's trailing 3-year annualized return. Blank => nothing to assess
-    // (an empty field must NOT be read as a real 0% return, which would falsely flag underperformance).
-    var raw = profile.return3yrPct;
-    var provided = raw !== '' && raw != null && !isNaN(Number(raw));
-    var clientReturn = provided ? Number(raw) : null;
+    // The advisor enters the last few annual returns; the client's figure is their average. Blank years
+    // are ignored (an empty field must NOT be read as a real 0%). Falls back to a single trailing-return
+    // field if present (legacy profiles).
+    var annual = (profile.annualReturns || [])
+      .map(function (r) { return Number(r && r.pct); })
+      .filter(function (n) { return !isNaN(n); });
+    var clientReturn = null, provided = false;
+    if (annual.length) {
+      clientReturn = annual.reduce(function (s, n) { return s + n; }, 0) / annual.length;
+      provided = true;
+    } else if (profile.return3yrPct !== '' && profile.return3yrPct != null && !isNaN(Number(profile.return3yrPct))) {
+      clientReturn = Number(profile.return3yrPct);
+      provided = true;
+    }
 
     // Dollar opportunity cost is best-effort: prefer summed holdings, else the investable-asset buckets.
     var holdingsTotal = (profile.holdings || []).reduce(function (s, h) { return s + (Number(h.value) || 0); }, 0);
@@ -29,6 +38,7 @@ HARP.performance = (function () {
     var result = {
       provided: provided,
       clientReturnPct: clientReturn,
+      annualReturns: (profile.annualReturns || []),
       benchmarkName: benchmarkName,
       benchmarkPct: benchmark,
       gapPct: null,                 // client - benchmark (negative => trailing the market)
@@ -49,7 +59,7 @@ HARP.performance = (function () {
 
     if (gap < -tolerance) {
       result.status = 'underperform';
-      var detail = 'The trailing 3-year return trails the ' + benchmarkName + ' benchmark by about ' +
+      var detail = 'The 3-year average return trails the ' + benchmarkName + ' benchmark by about ' +
         pct(Math.abs(gap)) + ' per year.';
       if (dollarGapAnnual != null && dollarGapAnnual < 0) {
         detail += ' On about ' + money(basis) + ' invested, that is roughly ' + money(Math.abs(dollarGapAnnual)) +
@@ -59,7 +69,7 @@ HARP.performance = (function () {
         'consider lower-cost, broadly diversified index exposure.';
       findings.push({
         category: 'Investment performance',
-        severity: gap < -severeGap ? 'risk' : 'warn',
+        severity: gap <= -severeGap ? 'risk' : 'warn',
         title: headline,
         detail: detail
       });

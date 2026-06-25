@@ -14,6 +14,16 @@ HARP.ui.forms = (function () {
   function checked(id) { var e = $(id); return e ? e.checked : false; }
   function setVal(id, v) { var e = $(id); if (e) e.value = (v == null ? '' : v); }
   function setChecked(id, v) { var e = $(id); if (e) e.checked = !!v; }
+  function selectedValues(selectEl) {
+    if (!selectEl) return [];
+    return Array.prototype.filter.call(selectEl.options, function (o) { return o.selected; })
+      .map(function (o) { return o.value; });
+  }
+  function setMultiSelect(selectEl, values) {
+    if (!selectEl) return;
+    var sel = values || [];
+    Array.prototype.forEach.call(selectEl.options, function (o) { o.selected = sel.indexOf(o.value) >= 0; });
+  }
 
   // ---------------------------------------------------------------- holdings
   function sectorOptions(selected) {
@@ -29,6 +39,7 @@ HARP.ui.forms = (function () {
       '<td><input type="text" class="h-name" value="' + esc(h.name) + '" placeholder="Apple Inc." /></td>' +
       '<td><select class="h-sector">' + sectorOptions(h.sector) + '</select></td>' +
       '<td class="num"><input type="number" class="h-value" min="0" step="1000" value="' + esc(h.value) + '" placeholder="0" /></td>' +
+      '<td class="num"><input type="number" class="h-basis" min="0" step="1000" value="' + esc(h.costBasis == null ? '' : h.costBasis) + '" placeholder="—" /></td>' +
       '<td><button type="button" class="icon-btn" title="Remove">&times;</button></td>';
     $('holdings-body').appendChild(tr);
 
@@ -40,7 +51,7 @@ HARP.ui.forms = (function () {
       var found = HARP.sectors.lookup(tickerEl.value);
       if (found) sectorEl.value = found;
     });
-    tr.querySelector('.icon-btn').addEventListener('click', function () { tr.remove(); });
+    tr.querySelector('.icon-btn').addEventListener('click', function () { tr.remove(); scheduleSave(); });
   }
   function readHoldings() {
     var out = [];
@@ -49,59 +60,155 @@ HARP.ui.forms = (function () {
       var name = tr.querySelector('.h-name').value.trim();
       var ticker = tr.querySelector('.h-ticker').value.trim();
       if (value <= 0 && !name && !ticker) return; // skip empty rows
-      out.push({ ticker: ticker, name: name, sector: tr.querySelector('.h-sector').value, value: value });
+      var basisStr = tr.querySelector('.h-basis').value.trim();
+      out.push({ ticker: ticker, name: name, sector: tr.querySelector('.h-sector').value, value: value,
+        costBasis: basisStr === '' ? '' : (parseFloat(basisStr) || 0) });
     });
     return out;
   }
 
-  // ---------------------------------------------------------------- insurance policies
-  var POLICY = {
-    life:       { label: 'Life — coverage ($)',                field: 'coverage' },
-    disability: { label: 'Disability — monthly benefit ($)',   field: 'monthlyBenefit' },
-    property:   { label: 'Homeowners — dwelling coverage ($)', field: 'dwellingCoverage' },
-    umbrella:   { label: 'Umbrella — coverage ($)',            field: 'coverage' }
-  };
-  function addPolicyCard(type, amount) {
-    if (!POLICY[type]) return;
-    var div = document.createElement('div');
-    div.className = 'policy-card';
-    div.dataset.type = type;
-    div.innerHTML =
-      '<label>' + esc(POLICY[type].label) +
-      '<input type="number" class="policy-amount" min="0" step="1000" value="' + esc(amount == null ? '' : amount) + '" /></label>' +
-      '<button type="button" class="icon-btn" title="Remove">&times;</button>';
-    div.querySelector('.icon-btn').addEventListener('click', function () { div.remove(); });
-    $('policies').appendChild(div);
+  // ---------------------------------------------------------------- performance (last 3 years)
+  function perfYears() {
+    var now = new Date().getFullYear();
+    return [now - 3, now - 2, now - 1];
+  }
+  function buildPerformanceInputs() {
+    $('performance-inputs').innerHTML = perfYears().map(function (y) {
+      return '<label>' + y + ' return (%)<input type="number" class="ret-input" id="ret-' + y +
+        '" step="0.1" placeholder="e.g. 7.5" /></label>';
+    }).join('');
+  }
+  function readAnnualReturns() {
+    return perfYears().map(function (y) { return { year: y, pct: numOrBlank('ret-' + y) }; });
+  }
+  function loadAnnualReturns(rows) {
+    (rows || []).forEach(function (r) { if (r) setVal('ret-' + r.year, r.pct); });
+  }
+
+  // ---------------------------------------------------------------- insurance
+  function policyTypeOptions() {
+    return HARP.insurance.POLICY_TYPES.map(function (t) {
+      return '<option value="' + esc(t.key) + '">' + esc(t.label) + '</option>';
+    }).join('');
+  }
+  function syncInsuranceCascade() {
+    var has = $('ins-hasPolicies');
+    if (has) $('ins-policies-followup').hidden = !has.checked;
+  }
+  function buildInsuranceInputs() {
+    $('insurance-inputs').innerHTML =
+      '<div class="ins-q">' +
+        '<label><input type="checkbox" id="ins-hasPolicies" /> Has insurance policies</label>' +
+        '<div class="legal-followup" id="ins-policies-followup" hidden>' +
+          '<label>What policies? <span class="opt">(select all that apply)</span>' +
+            '<select id="ins-policyTypes" multiple size="4">' + policyTypeOptions() + '</select></label>' +
+          '<label>Total face value of all policies ($)<input type="number" id="ins-totalFaceValue" min="0" step="1000" placeholder="0" /></label>' +
+        '</div>' +
+      '</div>';
+    var has = $('ins-hasPolicies');
+    if (has) has.addEventListener('change', syncInsuranceCascade);
+    syncInsuranceCascade();
   }
   function readInsurance() {
-    var ins = {
-      employed: checked('ins-employed'),
-      ownsHome: checked('ins-ownsHome'),
-      homeValue: num('ins-homeValue'),
-      life: { has: false }, disability: { has: false }, property: { has: false }, umbrella: { has: false }
+    return {
+      hasPolicies: checked('ins-hasPolicies'),
+      policyTypes: selectedValues($('ins-policyTypes')),
+      totalFaceValue: num('ins-totalFaceValue')
     };
-    document.querySelectorAll('#policies .policy-card').forEach(function (card) {
-      var type = card.dataset.type;
-      var amount = parseFloat(card.querySelector('.policy-amount').value) || 0;
-      if (type === 'life') ins.life = { has: true, coverage: amount };
-      else if (type === 'disability') ins.disability = { has: true, monthlyBenefit: amount };
-      else if (type === 'property') ins.property = { has: true, dwellingCoverage: amount };
-      else if (type === 'umbrella') ins.umbrella = { has: true, coverage: amount };
-    });
-    return ins;
+  }
+  function loadInsurance(ins) {
+    ins = ins || {};
+    setChecked('ins-hasPolicies', !!ins.hasPolicies);
+    setMultiSelect($('ins-policyTypes'), ins.policyTypes);
+    setVal('ins-totalFaceValue', ins.totalFaceValue);
+    syncInsuranceCascade();
   }
 
   // ---------------------------------------------------------------- legal
+  function trustTypeOptions() {
+    return HARP.legal.TRUST_TYPES.map(function (t) {
+      return '<option value="' + esc(t.key) + '">' + esc(t.label) + '</option>';
+    }).join('');
+  }
+  function syncLegalCascade() {
+    var will = $('legal-will'), trust = $('legal-trust'), types = $('legal-trustTypes');
+    if (will) $('legal-will-followup').hidden = !will.checked;
+    if (trust) {
+      $('legal-trust-followup').hidden = !trust.checked;
+      var anyType = trust.checked && selectedValues(types).length > 0;
+      $('legal-trustReviewed-followup').hidden = !anyType;
+    }
+  }
+  function wireLegalCascade() {
+    ['legal-will', 'legal-trust', 'legal-trustTypes'].forEach(function (id) {
+      var el = $(id);
+      if (el) el.addEventListener('change', syncLegalCascade);
+    });
+  }
   function buildLegalChecklist() {
-    $('legal-checklist').innerHTML = HARP.legal.ESSENTIALS.map(function (item) {
+    var essentials = HARP.legal.ESSENTIALS.map(function (item) {
       return '<label><input type="checkbox" id="legal-' + item.key + '" /> ' + esc(item.label) +
         (item.optional ? ' <span class="opt">(optional)</span>' : '') + '</label>';
     }).join('');
+
+    $('legal-checklist').innerHTML =
+      '<div class="legal-q">' +
+        '<label><input type="checkbox" id="legal-will" /> Will</label>' +
+        '<div class="legal-followup" id="legal-will-followup" hidden>' +
+          '<label>Years since the will was last reviewed<input type="number" id="legal-willReviewedYears" min="0" step="1" placeholder="e.g. 3" /></label>' +
+        '</div>' +
+      '</div>' +
+      '<div class="legal-q">' +
+        '<label><input type="checkbox" id="legal-trust" /> Trust set up</label>' +
+        '<div class="legal-followup" id="legal-trust-followup" hidden>' +
+          '<label>Type(s) of trust <span class="opt">(select all that apply)</span>' +
+            '<select id="legal-trustTypes" multiple size="5">' + trustTypeOptions() + '</select></label>' +
+          '<div class="legal-followup" id="legal-trustReviewed-followup" hidden>' +
+            '<label>Years since the trust(s) were last reviewed<input type="number" id="legal-trustReviewedYears" min="0" step="1" placeholder="e.g. 3" /></label>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="checklist-items">' + essentials + '</div>';
+
+    wireLegalCascade();
+    syncLegalCascade();
   }
   function readLegal() {
-    var out = {};
+    var out = {
+      will: checked('legal-will'),
+      willReviewedYears: numOrBlank('legal-willReviewedYears'),
+      trust: checked('legal-trust'),
+      trustTypes: selectedValues($('legal-trustTypes')),
+      trustReviewedYears: numOrBlank('legal-trustReviewedYears')
+    };
     HARP.legal.ESSENTIALS.forEach(function (item) { out[item.key] = checked('legal-' + item.key); });
     return out;
+  }
+  function loadLegal(legal) {
+    legal = legal || {};
+    setChecked('legal-will', !!legal.will);
+    setVal('legal-willReviewedYears', legal.willReviewedYears);
+    setChecked('legal-trust', !!legal.trust);
+    setMultiSelect($('legal-trustTypes'), legal.trustTypes);
+    setVal('legal-trustReviewedYears', legal.trustReviewedYears);
+    HARP.legal.ESSENTIALS.forEach(function (item) { setChecked('legal-' + item.key, !!legal[item.key]); });
+    syncLegalCascade();
+  }
+
+  // ---------------------------------------------------------------- persistence (localStorage, on-device)
+  // Holds the working profile across page-jumps and hard refreshes so the advisor does not re-enter a
+  // scenario. Data stays on the device (no backend); Reset clears it.
+  var STORAGE_KEY = 'harp.profile.v1';
+  var saveTimer = null;
+  function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(readProfile())); } catch (e) {} }
+  function scheduleSave() { if (saveTimer) clearTimeout(saveTimer); saveTimer = setTimeout(save, 300); }
+  function loadSaved() { try { var s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+  function clearSaved() { try { localStorage.removeItem(STORAGE_KEY); } catch (e) {} }
+  function wireAutosave() {
+    var form = $('harp-form');
+    if (!form) return;
+    form.addEventListener('input', scheduleSave);
+    form.addEventListener('change', scheduleSave);
   }
 
   // ---------------------------------------------------------------- profile
@@ -116,8 +223,11 @@ HARP.ui.forms = (function () {
       taxable: num('taxable'),
       taxDeferred: num('taxDeferred'),
       taxFree: num('taxFree'),
-      return3yrPct: numOrBlank('return3yrPct'),
+      annualReturns: readAnnualReturns(),
       holdings: readHoldings(),
+      assets: num('assets'),
+      liabilities: num('liabilities'),
+      yearsToRetirement: numOrBlank('yearsToRetirement'),
       insurance: readInsurance(),
       legal: readLegal()
     };
@@ -126,38 +236,38 @@ HARP.ui.forms = (function () {
     setVal('name', p.name); setVal('filingStatus', p.filingStatus);
     setVal('income', p.income); setVal('agi', p.agi); setVal('totalTax', p.totalTax); setVal('dependents', p.dependents);
     setVal('taxable', p.taxable); setVal('taxDeferred', p.taxDeferred); setVal('taxFree', p.taxFree);
-    setVal('return3yrPct', p.return3yrPct);
+    loadAnnualReturns(p.annualReturns);
 
     $('holdings-body').innerHTML = '';
     (p.holdings || []).forEach(addHoldingRow);
     if (!(p.holdings || []).length) addHoldingRow();
 
-    var ins = p.insurance || {};
-    setChecked('ins-employed', ins.employed !== false);
-    setChecked('ins-ownsHome', !!ins.ownsHome);
-    setVal('ins-homeValue', ins.homeValue);
-    $('policies').innerHTML = '';
-    if (ins.life && ins.life.has) addPolicyCard('life', ins.life.coverage);
-    if (ins.disability && ins.disability.has) addPolicyCard('disability', ins.disability.monthlyBenefit);
-    if (ins.property && ins.property.has) addPolicyCard('property', ins.property.dwellingCoverage);
-    if (ins.umbrella && ins.umbrella.has) addPolicyCard('umbrella', ins.umbrella.coverage);
-
-    HARP.legal.ESSENTIALS.forEach(function (item) { setChecked('legal-' + item.key, !!(p.legal && p.legal[item.key])); });
+    setVal('assets', p.assets); setVal('liabilities', p.liabilities);
+    setVal('yearsToRetirement', p.yearsToRetirement);
+    loadInsurance(p.insurance);
+    loadLegal(p.legal);
+    save();
   }
   function reset() {
     // Call the prototype method directly: a form control whose id/name is "reset" shadows the
     // form's native reset() (the named-property gotcha), so form.reset() can resolve to an element.
     HTMLFormElement.prototype.reset.call($('harp-form'));
     $('holdings-body').innerHTML = ''; addHoldingRow();
-    $('policies').innerHTML = '';
+    syncInsuranceCascade();
+    syncLegalCascade();
+    clearSaved();
   }
   function init() {
+    buildPerformanceInputs();
+    buildInsuranceInputs();
     buildLegalChecklist();
-    addHoldingRow();
+    var saved = loadSaved();
+    if (saved) loadProfile(saved); else addHoldingRow();
+    wireAutosave();
   }
 
   return {
     init: init, readProfile: readProfile, loadProfile: loadProfile, reset: reset,
-    addHoldingRow: addHoldingRow, addPolicyCard: addPolicyCard
+    addHoldingRow: addHoldingRow
   };
 })();

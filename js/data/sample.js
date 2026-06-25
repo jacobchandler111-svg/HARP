@@ -1,6 +1,7 @@
 // Example household used by the "Load sample" button. Crafted to exercise every check:
-// heavy Technology weighting, a below-market 3-year return, a large life-insurance gap,
-// missing disability + umbrella, low dwelling coverage, no tax-free bucket, and missing estate documents.
+// heavy Technology weighting, large embedded gains (AAPL, NVDA) flagged in both investments and tax, a
+// below-market 3-year average return, face value below both the future-income value and liabilities, no
+// tax-free bucket, >$5M assets with no asset-protection trust, an out-of-date will, and missing estate documents.
 window.HARP = window.HARP || {};
 
 HARP.sample = {
@@ -18,35 +19,46 @@ HARP.sample = {
   taxDeferred: 600000,
   taxFree: 0,
 
-  // Trailing 3-year annualized portfolio return (%/yr) — below the ~10% market benchmark, to trigger the flag
-  return3yrPct: 5,
+  // Last three years of total return (%/yr); the engine averages them. Avg = 5% vs ~10% market -> underperforms.
+  annualReturns: [
+    { year: 2023, pct: 6 },
+    { year: 2024, pct: 4 },
+    { year: 2025, pct: 5 }
+  ],
+
+  // Years until retirement — drives the economic-value-of-future-income method.
+  yearsToRetirement: 20,
+
+  // Household balance sheet. Assets > $5M with no asset-protection trust triggers the estate risk;
+  // $600k liabilities against $250k face value is a "significantly underinsured" red flag.
+  assets: 6000000,
+  liabilities: 600000,
 
   holdings: [
-    { ticker: 'AAPL', name: 'Apple Inc.',        sector: 'Technology',          value: 180000 },
+    { ticker: 'AAPL', name: 'Apple Inc.',        sector: 'Technology',          value: 180000, costBasis: 60000 },
     { ticker: 'MSFT', name: 'Microsoft Corp.',   sector: 'Technology',          value: 120000 },
-    { ticker: 'NVDA', name: 'NVIDIA Corp.',      sector: 'Technology',          value: 90000 },
+    { ticker: 'NVDA', name: 'NVIDIA Corp.',      sector: 'Technology',          value: 90000, costBasis: 20000 },
     { ticker: 'VOO',  name: 'Vanguard S&P 500',  sector: 'Diversified / Fund',  value: 200000 },
     { ticker: 'JPM',  name: 'JPMorgan Chase',    sector: 'Financials',          value: 60000 },
     { ticker: 'XOM',  name: 'Exxon Mobil',       sector: 'Energy',              value: 40000 }
   ],
 
   insurance: {
-    employed: true,
-    ownsHome: true,
-    homeValue: 450000,
-    life: { has: true, coverage: 250000 },
-    disability: { has: false, monthlyBenefit: 0 },
-    property: { has: true, dwellingCoverage: 300000 },
-    umbrella: { has: false, coverage: 0 }
+    hasPolicies: true,
+    policyTypes: ['life', 'property'],   // life + homeowners; no disability or umbrella
+    totalFaceValue: 250000               // below both the future-income value and the $600k liabilities
   },
 
   legal: {
     will: true,
+    willReviewedYears: 8,          // > 5 years -> high risk (out of date)
+    trust: true,
+    trustTypes: ['revocable'],     // no asset-protection trust -> with >$5M assets, triggers the APT risk
+    trustReviewedYears: 1,
     poa: false,
     healthcare: false,
     beneficiaries: true,
     guardianship: false,
-    trust: false,
     assetInventory: false
   }
 };

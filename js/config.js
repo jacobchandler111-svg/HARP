@@ -22,37 +22,28 @@ HARP.config = {
   // S&P 500 fund or a cash balance is not single-name or sector risk.
   nonConcentratingSectors: ['Diversified / Fund', 'Cash & Equivalents'],
 
-  // Investment performance vs the market (trailing 3-year, annualized)
+  // Investment performance vs the market (3-year average annual return)
   performance: {
     benchmarkName: 'S&P 500',
-    benchmarkReturnPct: 10,   // trailing ~3-year average annual return for the benchmark (tunable; ~10-11% historically)
-    tolerancePct: 1,          // within this many points of the benchmark counts as "in line with the market"
-    severeGapPct: 4           // trailing the benchmark by more than this flags as a risk, not just a watch item
+    benchmarkReturnPct: 10,   // ~3-year average annual return for the benchmark (tunable; ~10-12%)
+    tolerancePct: 0,          // any underperformance vs the benchmark flags (moderate)
+    severeGapPct: 5           // underperforming by 5 points or more => critical (risk)
   },
 
-  // Insurance adequacy, by policy type
+  // Embedded / unrealized gains — needs a cost basis on the holding. A large low-basis position is
+  // both an investment-concentration and an upcoming-tax-event concern (flagged in both domains).
+  gains: {
+    embeddedGainPct: 100,     // unrealized gain >= this % of cost basis (value >= ~2x basis)
+    minGainAmount: 25000      // ...and only when the dollar gain is at least this material
+  },
+
+  // Insurance adequacy. Total policy face value is compared two ways — to the economic value of
+  // future income, and to liabilities — on a sliding scale.
   insurance: {
-    life: {
-      baseIncomeMultiple: 10,        // baseline need ~ 10x income
-      perDependentMultiple: 1,       // +1x income per dependent
-      maxDependentMultiple: 5,       // cap the dependent add-on
-      underinsuredBand: 0.8,         // coverage below need*band => underinsured
-      overinsuredBand: 1.5           // coverage above need*band => possibly over-insured
-    },
-    disability: {
-      targetReplacementPct: 60,      // benefit should replace ~60% of gross income
-      underinsuredBand: 0.8
-    },
-    property: {
-      dwellingCoverageBand: 0.8      // dwelling coverage should be >= 80% of home value
-    },
-    umbrella: {
-      recommendAboveAssets: 500000,  // recommend umbrella once estimated assets exceed this
-      minCoverageBand: 1.0           // umbrella should be >= ~1x estimated assets
-    },
-    // Life face amount vs total liabilities — sliding-scale severity
-    liabilityCoverage: {
-      significantShortfallBand: 0.5  // face covering < 50% of liabilities => significantly under (risk); 50-99% => slightly under (warn)
+    significantShortfallBand: 0.5,   // face covering < 50% of a need => significantly under (risk); 50-99% => slightly under (warn)
+    incomeMethod: {
+      discountRatePct: 3,            // real discount rate for the economic value of future income
+      defaultYearsToRetirement: 20   // assumed earning horizon when the advisor does not provide one
     }
   },
 
@@ -69,7 +60,8 @@ HARP.config = {
   // Legal / estate
   legal: {
     assetProtectionTrustThreshold: 5000000,  // assets above this with no asset-protection trust => liability risk
-    reviewStaleYears: 5                       // a will/trust not reviewed within this many years => flagged as stale
+    reviewModerateYears: 3,                   // a document not reviewed in over 3 years => moderate concern (warn)
+    reviewHighRiskYears: 5                     // not reviewed in over 5 years => high risk
   },
 
   // Overall score deductions (out of 100)

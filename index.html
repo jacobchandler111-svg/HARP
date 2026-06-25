@@ -49,16 +49,15 @@
             <h4 class="sub">Holdings</h4>
             <table class="holdings" id="holdings">
               <thead>
-                <tr><th>Ticker</th><th>Name</th><th>Sector</th><th class="num">Value ($)</th><th aria-label="Remove"></th></tr>
+                <tr><th>Ticker</th><th>Name</th><th>Sector</th><th class="num">Value ($)</th><th class="num">Cost basis ($)</th><th aria-label="Remove"></th></tr>
               </thead>
               <tbody id="holdings-body"><!-- rows injected by forms.js --></tbody>
             </table>
             <button type="button" class="link-btn" id="add-holding">+ Add holding</button>
 
             <h4 class="sub">Portfolio performance</h4>
-            <div class="grid">
-              <label>Trailing 3-year return (% per year)<input type="number" id="return3yrPct" step="0.1" placeholder="e.g. 7.5" /></label>
-            </div>
+            <p class="hint">Annual total return for each of the last three years; the engine averages them and compares to the market benchmark.</p>
+            <div class="grid" id="performance-inputs"><!-- year fields injected by forms.js --></div>
 
             <h4 class="sub">Account balances by tax treatment</h4>
             <div class="grid">
@@ -108,21 +107,15 @@
             <span class="acc-title">3 · Insurance</span>
           </button>
           <div class="accordion-body">
-            <div class="questions">
-              <label class="q"><input type="checkbox" id="ins-employed" checked /> Currently earning income (assess disability)</label>
-              <label class="q"><input type="checkbox" id="ins-ownsHome" /> Owns a home (assess homeowners)</label>
-              <label>Home value ($)<input type="number" id="ins-homeValue" min="0" step="1000" placeholder="0" /></label>
+            <h4 class="sub">Assets &amp; liabilities</h4>
+            <div class="grid">
+              <label>Total assets ($)<input type="number" id="assets" min="0" step="1000" placeholder="0" /></label>
+              <label>Total liabilities ($)<input type="number" id="liabilities" min="0" step="1000" placeholder="0" /></label>
             </div>
-            <div class="policy-add">
-              <select id="policy-type">
-                <option value="life">Life</option>
-                <option value="disability">Disability</option>
-                <option value="property">Homeowners / property</option>
-                <option value="umbrella">Umbrella liability</option>
-              </select>
-              <button type="button" class="link-btn" id="add-policy">+ Add policy</button>
+            <div class="grid">
+              <label>Years until retirement<input type="number" id="yearsToRetirement" min="0" step="1" placeholder="e.g. 20" /></label>
             </div>
-            <div id="policies"><!-- policy cards injected by forms.js --></div>
+            <div id="insurance-inputs"><!-- policy questions injected by forms.js --></div>
           </div>
         </section>
 
@@ -165,6 +158,7 @@
   <script src="js/engine/accounting.js"></script>
   <script src="js/engine/concentration.js"></script>
   <script src="js/engine/performance.js"></script>
+  <script src="js/engine/gains.js"></script>
   <script src="js/engine/insurance.js"></script>
   <script src="js/engine/tax.js"></script>
   <script src="js/engine/legal.js"></script>
