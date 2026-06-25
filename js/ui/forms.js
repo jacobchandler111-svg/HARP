@@ -8,6 +8,8 @@ HARP.ui.forms = (function () {
   function $(id) { return document.getElementById(id); }
   function val(id) { var e = $(id); return e ? e.value.trim() : ''; }
   function num(id) { return parseFloat(val(id)) || 0; }
+  // Like num(), but keeps a blank field as '' (not 0) so an unanswered value is not read as a real 0.
+  function numOrBlank(id) { var v = val(id); return v === '' ? '' : parseFloat(v); }
   function int(id) { return parseInt(val(id), 10) || 0; }
   function checked(id) { var e = $(id); return e ? e.checked : false; }
   function setVal(id, v) { var e = $(id); if (e) e.value = (v == null ? '' : v); }
@@ -114,6 +116,7 @@ HARP.ui.forms = (function () {
       taxable: num('taxable'),
       taxDeferred: num('taxDeferred'),
       taxFree: num('taxFree'),
+      return3yrPct: numOrBlank('return3yrPct'),
       holdings: readHoldings(),
       insurance: readInsurance(),
       legal: readLegal()
@@ -123,6 +126,7 @@ HARP.ui.forms = (function () {
     setVal('name', p.name); setVal('filingStatus', p.filingStatus);
     setVal('income', p.income); setVal('agi', p.agi); setVal('totalTax', p.totalTax); setVal('dependents', p.dependents);
     setVal('taxable', p.taxable); setVal('taxDeferred', p.taxDeferred); setVal('taxFree', p.taxFree);
+    setVal('return3yrPct', p.return3yrPct);
 
     $('holdings-body').innerHTML = '';
     (p.holdings || []).forEach(addHoldingRow);

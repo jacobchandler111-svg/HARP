@@ -1,6 +1,6 @@
 // Example household used by the "Load sample" button. Crafted to exercise every check:
-// heavy Technology weighting, a large life-insurance gap, missing disability + umbrella,
-// low dwelling coverage, no tax-free bucket, and missing estate documents.
+// heavy Technology weighting, a below-market 3-year return, a large life-insurance gap,
+// missing disability + umbrella, low dwelling coverage, no tax-free bucket, and missing estate documents.
 window.HARP = window.HARP || {};
 
 HARP.sample = {
@@ -17,6 +17,9 @@ HARP.sample = {
   taxable: 400000,
   taxDeferred: 600000,
   taxFree: 0,
+
+  // Trailing 3-year annualized portfolio return (%/yr) — below the ~10% market benchmark, to trigger the flag
+  return3yrPct: 5,
 
   holdings: [
     { ticker: 'AAPL', name: 'Apple Inc.',        sector: 'Technology',          value: 180000 },

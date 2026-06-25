@@ -9,6 +9,8 @@ HARP.concentration = (function () {
 
     var total = holdings.reduce(function (s, h) { return s + (Number(h.value) || 0); }, 0);
     var findings = [];
+    // Diversified funds and cash are not single-name or sector bets — exclude them from both flags.
+    var skip = cfg.nonConcentratingSectors || [];
 
     // Normalize + sort positions largest first
     var positions = holdings.map(function (h) {
@@ -24,6 +26,7 @@ HARP.concentration = (function () {
 
     // Single-stock concentration
     positions.forEach(function (p) {
+      if (skip.indexOf(p.sector) >= 0) return;
       if (p.pct > cfg.singleStockConcentrationPct) {
         findings.push({
           category: 'Investment concentration',
@@ -50,6 +53,7 @@ HARP.concentration = (function () {
     }).sort(function (a, b) { return b.value - a.value; });
 
     sectors.forEach(function (s) {
+      if (skip.indexOf(s.name) >= 0) return;
       if (s.pct > cfg.sectorConcentrationPct) {
         findings.push({
           category: 'Sector exposure',

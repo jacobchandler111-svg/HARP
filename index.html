@@ -35,7 +35,7 @@
         <section class="accordion-item" data-section="investments">
           <button type="button" class="accordion-header" aria-expanded="true">
             <span class="chev" aria-hidden="true">▾</span>
-            <span class="acc-title">1 · Investments &amp; financial statements</span>
+            <span class="acc-title">1 · Investment statements</span>
           </button>
           <div class="accordion-body">
             <div class="dropzone" data-upload="investments">
@@ -55,6 +55,11 @@
             </table>
             <button type="button" class="link-btn" id="add-holding">+ Add holding</button>
 
+            <h4 class="sub">Portfolio performance</h4>
+            <div class="grid">
+              <label>Trailing 3-year return (% per year)<input type="number" id="return3yrPct" step="0.1" placeholder="e.g. 7.5" /></label>
+            </div>
+
             <h4 class="sub">Account balances by tax treatment</h4>
             <div class="grid">
               <label>Taxable ($)<input type="number" id="taxable" min="0" step="1000" placeholder="0" /></label>
@@ -68,12 +73,12 @@
         <section class="accordion-item" data-section="accounting">
           <button type="button" class="accordion-header" aria-expanded="true">
             <span class="chev" aria-hidden="true">▾</span>
-            <span class="acc-title">2 · 1040 / accounting statement</span>
+            <span class="acc-title">2 · Accounting statement</span>
           </button>
           <div class="accordion-body">
             <div class="dropzone" data-upload="accounting">
               <input type="file" class="dz-input" multiple accept=".pdf,.png,.jpg,.jpeg" hidden />
-              <p class="dz-text">Drag &amp; drop the 1040 / tax return here, or
+              <p class="dz-text">Drag &amp; drop the accounting statement here, or
                 <button type="button" class="link-btn dz-browse">browse</button></p>
               <p class="dz-note">Automatic extraction arrives in Phase 2 — for now, enter values manually below.</p>
               <ul class="dz-files"></ul>
@@ -159,6 +164,7 @@
   <script src="js/data/sample.js"></script>
   <script src="js/engine/accounting.js"></script>
   <script src="js/engine/concentration.js"></script>
+  <script src="js/engine/performance.js"></script>
   <script src="js/engine/insurance.js"></script>
   <script src="js/engine/tax.js"></script>
   <script src="js/engine/legal.js"></script>
