@@ -150,34 +150,60 @@ HARP.ui.report = (function () {
     };
   }
 
+  function naturalJoin(arr) {
+    if (arr.length <= 1) return arr.join('');
+    if (arr.length === 2) return arr[0] + ' and ' + arr[1];
+    return arr.slice(0, -1).join(', ') + ', and ' + arr[arr.length - 1];
+  }
+  // Turn a finding title into a short phrase for the critical-issues list.
+  function shortIssue(title) {
+    var m = title.match(/^Missing:\s*(.+)$/i);
+    if (m) return 'missing ' + m[1].charAt(0).toLowerCase() + m[1].slice(1);
+    var u = title.match(/^Potentially underinsured \(([^)]+)\)$/i);
+    if (u) return 'underinsured ' + u[1].toLowerCase() + ' coverage';
+    return title.replace(/\bis\b(\s+[\d.]+% of the portfolio)/, 'at$1').replace(/^Potentially\s+/i, '');
+  }
+
+  // Executive summary: <=3 sentences, focused on critical issues. Groups the sector pairs
+  // (investments+tax, legal+insurance) and names a few specific gaps.
   function execSummary(a, overall, cats, filled) {
     if (overall === null) {
-      return '<p>Enter information in the sections above to generate an overall assessment. ' +
+      return '<p>Enter information in the sections above to generate an assessment. ' +
         'Sections marked &ldquo;information needed&rdquo; are excluded until completed.</p>';
     }
-    var band = overall < 40 ? 'needs significant attention' : overall < 80 ? 'is fair, with room to improve' : 'is strong';
-    var crit = 0, mod = 0;
-    a.findings.forEach(function (f) {
-      var k = catKeyOfFinding(f);
-      if (k !== null && !filled[k]) return;
-      if (f.severity === 'risk') crit++; else if (f.severity === 'warn') mod++;
-    });
-    var weak = cats.filter(function (c) { return filled[c.key] && c.score < 80; })
-      .sort(function (x, y) { return x.score - y.score; })
-      .slice(0, 2).map(function (c) { return c.label; });
-    var missing = cats.filter(function (c) { return !filled[c.key]; }).map(function (c) { return c.label; });
 
-    var parts = ['Overall financial health ' + band + ' at ' + overall + '/100.'];
-    parts.push((crit || mod)
-      ? ' We flagged ' + crit + ' critical and ' + mod + ' moderate item' + ((crit + mod) === 1 ? '' : 's') +
-        (weak.length ? ', concentrated in ' + weak.join(' and ') + '.' : '.')
-      : ' No critical or moderate issues in the completed sections.');
-    if (missing.length) {
-      parts.push(' ' + missing.join(' and ') +
-        (missing.length === 1 ? ' still needs information and is' : ' still need information and are') +
-        ' excluded from the score.');
+    var crit = a.findings.filter(function (f) {
+      var k = catKeyOfFinding(f);
+      return f.severity === 'risk' && (k === null || filled[k]);
+    });
+    var missing = cats.filter(function (c) { return !filled[c.key]; }).map(function (c) { return c.label; });
+    var missTail = missing.length ? ' ' + naturalJoin(missing) +
+      (missing.length === 1 ? ' still needs information.' : ' still need information.') : '';
+
+    if (!crit.length) {
+      return '<p>' + esc('No critical issues stand out across the completed sections.' + missTail) + '</p>';
     }
-    return '<p>' + esc(parts.join('')) + '</p>';
+
+    var GROUPS = [
+      { label: 'investment and tax planning', keys: ['investments', 'tax'] },
+      { label: 'legal and insurance coverage', keys: ['legal', 'insurance'] }
+    ];
+    var hit = GROUPS.filter(function (g) {
+      return crit.some(function (f) { return g.keys.indexOf(catKeyOfFinding(f)) >= 0; });
+    }).map(function (g) { return g.label; });
+
+    // One representative critical issue per category (display order), up to 3.
+    var issues = [];
+    ['investments', 'tax', 'legal', 'insurance'].forEach(function (k) {
+      if (issues.length >= 3) return;
+      var f = crit.filter(function (x) { return catKeyOfFinding(x) === k; })[0];
+      if (f) issues.push(shortIssue(f.title));
+    });
+
+    var s1 = 'There is significant risk ' +
+      (hit.length > 1 ? 'across your ' + hit.join(' and your ') : 'in your ' + (hit[0] || 'completed sections')) + '.';
+    var s2 = ' Key issues include ' + naturalJoin(issues) + (crit.length > issues.length ? ', among others.' : '.');
+    return '<p>' + esc(s1 + s2 + missTail) + '</p>';
   }
 
   function findingHtml(f) {
