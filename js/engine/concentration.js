@@ -23,7 +23,9 @@ HARP.concentration = (function () {
     var positions = holdings.map(function (h) {
       var value = Number(h.value) || 0;
       return {
-        name: h.name || h.ticker || 'Unnamed holding',
+        // Prefer an explicit name; else look the company up from the ticker (the form may only capture
+        // the ticker now); else fall back to the ticker itself.
+        name: h.name || (HARP.sectors && HARP.sectors.nameOf(h.ticker)) || h.ticker || 'Unnamed holding',
         ticker: h.ticker || '',
         sector: h.sector || 'Other',
         value: value,
