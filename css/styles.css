@@ -161,4 +161,7 @@ button:hover { filter: brightness(0.97); }
 .subq-label { font-size: 13px; color: var(--ink); font-weight: 500; margin-bottom: 8px; }
 .trust-types { display: grid; gap: 8px; margin-bottom: 4px; }
 .trust-type-opt { display: flex; flex-direction: row; align-items: center; gap: 8px; font-size: 13px; color: var(--ink); cursor: pointer; }
-.q-followup select, .legal-followup select, .q-followup input[type="number"], .legal-followup input[type="number"] { margin-top: 4px; }
+.q-followup select, .legal-followup select { margin-top: 4px; }
+/* "How many years since reviewed" — number on the right, like the Yes/No toggle. */
+.q-row.q-sub { background: transparent; border: none; box-shadow: none; padding: 6px 2px; margin-bottom: 0; }
+.q-num { width: 84px; text-align: right; flex-shrink: 0; }

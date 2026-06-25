@@ -5,13 +5,11 @@ window.HARP = window.HARP || {};
 HARP.legal = (function () {
   // Core documents shown as a flat checklist. `when(profile)` makes an item conditional; `optional`
   // downgrades a miss to a note. (Will and Trust are handled separately below, as cascades.)
+  // Trimmed to the essentials the advisor wants asked: a single combined financial + healthcare
+  // power of attorney. (Healthcare directive, beneficiaries, guardianship, and asset inventory
+  // were removed per product direction — fewer, higher-signal questions.)
   var ESSENTIALS = [
-    { key: 'poa',           label: 'Financial power of attorney' },
-    { key: 'healthcare',    label: 'Healthcare directive / medical POA' },
-    { key: 'beneficiaries', label: 'Beneficiary designations reviewed in last 12 months' },
-    { key: 'guardianship',  label: 'Guardianship designation for minor children',
-      when: function (p) { return (Number(p.dependents) || 0) > 0; } },
-    { key: 'assetInventory',label: 'Asset inventory / letter of instruction', optional: true }
+    { key: 'poa', label: 'Financial & healthcare power of attorney' }
   ];
 
   // Options for the "type of trust" multi-select. `apt` is the asset-protection trust the
