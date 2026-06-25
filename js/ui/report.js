@@ -78,8 +78,8 @@ HARP.ui.report = (function () {
       ? '<img class="firm-logo" src="' + esc(b.logoUrl) + '" alt="' + esc(b.firmName) + '" />'
       : '<span class="firm-name">' + esc(b.firmName) + '</span>';
     return '<div class="op-header">' +
-      '<div class="op-firm">' + logo + '<span class="op-firm-tag">' + esc(b.tagline) + '</span></div>' +
-      '<div class="op-meta"><div class="op-title">Health &amp; Risk Profile</div>' +
+      '<div class="op-firm">' + logo + '<span class="op-firm-tag">Integrated Wealth Strategies</span></div>' +
+      '<div class="op-meta"><div class="op-harp">HARP</div>' +
       '<div class="op-prepared">Prepared for <strong>' + (esc(a.profile.name) || 'Client') + '</strong> · ' + today() + '</div></div>' +
       '</div>';
   }
@@ -92,30 +92,18 @@ HARP.ui.report = (function () {
     return bits.length ? '<div class="op-figures">' + bits.map(esc).join(' &nbsp;·&nbsp; ') + '</div>' : '';
   }
 
-  function scores(a, filled) {
-    var byKey = {};
-    a.categories.forEach(function (c) { byKey[c.key] = c; });
-    var order = ['investments', 'tax', 'legal', 'insurance'];
-    var cats = order.map(function (k) { return byKey[k]; }).filter(Boolean);
-
-    var completed = [];
+  // Circles only — exec summary moved to its own section. Sizes are ~25% larger than before.
+  function scores(cats, filled, overall) {
     var catHtml = cats.map(function (c) {
       var ok = filled[c.key];
-      if (ok) completed.push(c.score);
-      return '<div class="op-cat">' + gauge(ok ? c.score : null, 96, c.label, !ok) +
+      return '<div class="op-cat">' + gauge(ok ? c.score : null, 120, c.label, !ok) +
         '<div class="op-cat-label">' + esc(c.label) + '</div></div>';
     }).join('');
-
-    var overall = completed.length
-      ? Math.round(completed.reduce(function (s, v) { return s + v; }, 0) / completed.length)
-      : null;
-
     return '<div class="op-scores">' +
       '<div class="op-cats">' + catHtml + '</div>' +
       '<div class="op-overall-row">' +
-        '<div class="op-overall">' + gauge(overall, 150, 'Overall', overall === null) +
+        '<div class="op-overall">' + gauge(overall, 188, 'Overall', overall === null) +
           '<div class="op-overall-label">Overall health</div></div>' +
-        '<div class="op-exec">' + execSummary(a, overall, cats, filled) + '</div>' +
       '</div>' +
       '</div>';
   }
@@ -208,27 +196,44 @@ HARP.ui.report = (function () {
       '<div class="op-fdetail">' + esc(f.detail) + '</div></div>';
   }
 
-  function risks(a, filled) {
-    // Only assess sections that are filled in; findings from "information needed" sections are
-    // excluded (with their circle). Then show critical (risk) + moderate (warn), and footnote the
-    // trimmed minor notes so the report stays to ~1-2 pages.
+  // Critical (risk) + moderate (warn) findings from completed sections, severity-sorted; plus the
+  // count of trimmed minor notes. Shared by the Key risks and Recommendations sections.
+  function severityFindings(a, filled) {
     var assessed = a.findings.filter(function (f) {
       var k = catKeyOfFinding(f);
       return k === null || filled[k];
     });
-    var shown = assessed
-      .filter(function (f) { return f.severity === 'risk' || f.severity === 'warn'; })
-      .sort(function (x, y) { return SEV_ORDER[x.severity] - SEV_ORDER[y.severity]; });
-    var trimmed = assessed.filter(function (f) { return f.severity === 'info'; }).length;
-
+    return {
+      shown: assessed.filter(function (f) { return f.severity === 'risk' || f.severity === 'warn'; })
+        .sort(function (x, y) { return SEV_ORDER[x.severity] - SEV_ORDER[y.severity]; }),
+      trimmed: assessed.filter(function (f) { return f.severity === 'info'; }).length
+    };
+  }
+  // Key risks: the issues themselves (badge + title), no recommendation text.
+  function keyRisks(a, filled) {
+    var shown = severityFindings(a, filled).shown;
     var body = shown.length
-      ? shown.map(findingHtml).join('')
+      ? shown.map(function (f) {
+          return '<div class="op-finding ' + f.severity + '"><div class="op-fhead">' +
+            '<span class="badge ' + f.severity + '">' + SEV_LABEL[f.severity] + '</span>' +
+            '<span class="op-ftitle">' + esc(f.title) + '</span></div></div>';
+        }).join('')
       : '<p class="op-clean">No critical or moderate issues in the completed sections.</p>';
-    if (trimmed > 0) {
-      body += '<div class="op-trim">+ ' + trimmed + ' minor note' + (trimmed === 1 ? '' : 's') +
+    return '<div class="op-risks"><h3>Key risks</h3>' + body + '</div>';
+  }
+  // Recommendations: the suggested actions (each finding's detail), in their own section.
+  function recommendations(a, filled) {
+    var s = severityFindings(a, filled);
+    if (!s.shown.length && !s.trimmed) return '';
+    var body = s.shown.map(function (f) {
+      return '<div class="op-rec"><span class="op-rec-title">' + esc(f.title) + '</span>' +
+        '<span class="op-rec-detail">' + esc(f.detail) + '</span></div>';
+    }).join('');
+    if (s.trimmed > 0) {
+      body += '<div class="op-trim">+ ' + s.trimmed + ' minor note' + (s.trimmed === 1 ? '' : 's') +
         ' reviewed and omitted from this summary.</div>';
     }
-    return '<div class="op-risks"><h3>Key risks &amp; recommendations</h3>' + body + '</div>';
+    return '<div class="op-recs"><h3>Recommendations</h3>' + body + '</div>';
   }
 
   function footer() {
@@ -250,8 +255,19 @@ HARP.ui.report = (function () {
 
   function render(a) {
     var filled = filledByCategory(a);
+    var byKey = {};
+    a.categories.forEach(function (c) { byKey[c.key] = c; });
+    var cats = ['investments', 'tax', 'legal', 'insurance'].map(function (k) { return byKey[k]; }).filter(Boolean);
+    var completed = cats.filter(function (c) { return filled[c.key]; }).map(function (c) { return c.score; });
+    var overall = completed.length ? Math.round(completed.reduce(function (s, v) { return s + v; }, 0) / completed.length) : null;
+
     document.getElementById('report').innerHTML =
-      header(a) + keyFigures(a) + scores(a, filled) + risks(a, filled) + footer();
+      header(a) +
+      scores(cats, filled, overall) +
+      '<div class="op-exec-block"><h3>Executive summary</h3>' + execSummary(a, overall, cats, filled) + '</div>' +
+      keyRisks(a, filled) +
+      recommendations(a, filled) +
+      footer();
   }
 
   return { render: render, gauge: gauge };
