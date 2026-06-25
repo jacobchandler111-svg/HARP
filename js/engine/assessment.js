@@ -40,7 +40,7 @@ HARP.assessment = (function () {
       findings: findings,
       counts: counts,
       score: scoreFromFindings(findings, cfg),
-      categories: categoryScores(findings, cfg)
+      categories: categoryScores(findings, cfg, { insurance: insurance.categoryScore })
     };
   }
 
@@ -50,12 +50,20 @@ HARP.assessment = (function () {
     return counts;
   }
 
-  function categoryScores(findings, cfg) {
+  // `overrides` lets a module supply a category's score directly (e.g. insurance's (C,M) rubric), bypassing
+  // the generic/diminishing scoring for that category.
+  function categoryScores(findings, cfg, overrides) {
+    overrides = overrides || {};
     return CATEGORIES.map(function (c) {
       var own = findings.filter(function (f) { return c.match.indexOf(f.category) >= 0; });
       var counts = countSeverities(own);
-      var scheme = (cfg.categoryScoreScheme || {})[c.key];
-      var s = scheme ? scoreDiminishing(own, scheme) : scoreFromFindings(own, cfg);
+      var s;
+      if (overrides[c.key] != null) {
+        s = bandFor(overrides[c.key]);
+      } else {
+        var scheme = (cfg.categoryScoreScheme || {})[c.key];
+        s = scheme ? scoreDiminishing(own, scheme) : scoreFromFindings(own, cfg);
+      }
       return { key: c.key, label: c.label, score: s.value, band: s.band, counts: counts };
     });
   }

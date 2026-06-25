@@ -47,12 +47,15 @@ HARP.config = {
     minGainAmount: 25000      // ...and only when the dollar gain is at least this material
   },
 
-  // Insurance adequacy as a single "insurance gap": total face value (payout) vs liabilities and vs
-  // future income (income x years to retirement). The gap level sets a score weight on one finding.
+  // Insurance adequacy: total face value (payout) vs liabilities and vs future income (income x years to
+  // retirement), plus policy age. Each is its own finding; the CATEGORY score uses the (C,M) rubric below.
   insurance: {
-    significantShortfallBand: 0.5,   // payout below half a need (need >= ~2x payout) => critical, else moderate
+    significantShortfallBand: 0.5,   // payout covering < half a need => critical, else moderate (liabilities & future income)
     defaultYearsToRetirement: 20,    // remaining working years assumed when not provided
-    gapDeductions: { none: 75, critical: 52, moderate: 30 }  // score weight by gap level (Insurance gauge ~25 / 48 / 70 / 100)
+    policyAgeModerateYears: 7,        // policy issued / last reviewed >= this (and < critical) => moderate
+    policyAgeCriticalYears: 10,       // >= this => critical
+    // Insurance CATEGORY score by (criticals C, moderates M); overrides the generic per-finding scoring.
+    categoryScore: { none: 15, c2: 25, c1m1: 50, c1: 65, m2: 65, m1: 85, ok: 100 }
   },
 
   // Tax-bucket diversification

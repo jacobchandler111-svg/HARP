@@ -43,8 +43,8 @@ HARP.sample = {
 
   insurance: {
     hasPolicies: true,
-    policyTypes: ['life', 'property'],   // life + homeowners; no disability or umbrella
-    totalFaceValue: 250000               // below both the future-income value and the $600k liabilities
+    totalFaceValue: 250000,    // below both the future-income value and the $600k liabilities
+    policyAgeYears: 12         // > 10 years -> aged-policy critical (3 insurance criticals -> score 25)
   },
 
   legal: {
