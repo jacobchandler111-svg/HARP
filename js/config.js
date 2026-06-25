@@ -17,10 +17,13 @@ HARP.config = {
 
   // Investment concentration
   singleStockConcentrationPct: 20,   // flag any one stock above this % of the portfolio (single-name risk)
-  sectorConcentrationPct: 25,        // flag any one sector above this % of the portfolio (sector over-allocation)
+  sectorConcentrationPct: 30,        // flag any one sector above this % of the portfolio (sector over-allocation)
   // Sectors that are diversified or non-equity — excluded from the concentration flags, since an
   // S&P 500 fund or a cash balance is not single-name or sector risk.
   nonConcentratingSectors: ['Diversified / Fund', 'Cash & Equivalents'],
+  // Investment-category finding score weights (how hard each moves the Investments gauge). Concentration
+  // = critical; performance / embedded-gains = moderate. Tuned so 1 critical ~ mid-yellow, 2 ~ red.
+  investmentWeights: { critical: 33, moderate: 10 },
 
   // Investment performance: the client's most recent full-year return is compared to TWO benchmarks —
   // a fixed long-run market assumption, and the actual annualized S&P 500 return for the last 3 years.

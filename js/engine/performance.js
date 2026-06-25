@@ -49,6 +49,7 @@ HARP.performance = (function () {
       result.status = 'underperform';
       var lead = clientReturn > 0 ? 'The portfolio has been making money, but its ' : 'The ';
       findings.push({ category: 'Investment performance', severity: 'warn',
+        weight: cfg.investmentWeights && cfg.investmentWeights.moderate,
         title: 'Returns are trailing the S&P 500',
         detail: lead + periodLabel + ' return of ' + pct(clientReturn) + ' trailed the ' + benchmarkName +
           '’s recent performance. There may be room to do better — an area we may be able to help with.' });

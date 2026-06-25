@@ -32,6 +32,7 @@ HARP.gains = (function () {
         ' over a cost basis of ' + money(f.basis) + ').';
       // Investment-side ding
       findings.push({ category: 'Unrealized gains', severity: 'warn',
+        weight: cfg.investmentWeights && cfg.investmentWeights.moderate,
         title: 'Large embedded gain in ' + f.name,
         detail: lead + ' A concentrated low-basis position carries market risk and a built-in tax cost to ' +
           'unwind — linked to the tax flag for the same holding. Our investment team can help manage and stage the position.' });
