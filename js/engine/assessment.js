@@ -54,7 +54,8 @@ HARP.assessment = (function () {
     return CATEGORIES.map(function (c) {
       var own = findings.filter(function (f) { return c.match.indexOf(f.category) >= 0; });
       var counts = countSeverities(own);
-      var s = scoreFromFindings(own, cfg);
+      var scheme = (cfg.categoryScoreScheme || {})[c.key];
+      var s = scheme ? scoreDiminishing(own, scheme) : scoreFromFindings(own, cfg);
       return { key: c.key, label: c.label, score: s.value, band: s.band, counts: counts };
     });
   }
@@ -69,6 +70,16 @@ HARP.assessment = (function () {
       else if (f.severity === 'warn') deduction += (f.weight != null ? f.weight : cfg.score.perWarn);
     });
     return bandFor(Math.max(0, Math.min(100, 100 - deduction)));
+  }
+  // Diminishing per-category score: the first critical/moderate costs the most, each additional one less,
+  // so a category isn't tanked by piling-on findings (e.g. tax). Severity counts, not per-finding weights.
+  function scoreDiminishing(findings, scheme) {
+    var crit = 0, mod = 0, d = 0;
+    findings.forEach(function (f) {
+      if (f.severity === 'risk') { d += (crit === 0 ? scheme.firstCritical : scheme.addlCritical); crit++; }
+      else if (f.severity === 'warn') { d += (mod === 0 ? scheme.firstModerate : scheme.addlModerate); mod++; }
+    });
+    return bandFor(Math.max(0, Math.min(100, 100 - d)));
   }
   function bandFor(value) {
     var band =

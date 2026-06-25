@@ -72,7 +72,7 @@ HARP.config = {
     },
     // "In a high bracket on only the standard deduction" severity: flag at/above the moderate bracket,
     // critical at/above the critical bracket. The bracket is read off AGI (no tax is calculated).
-    bracketModerateMin: 22,
+    bracketModerateMin: 24,
     bracketCriticalMin: 35,
     // 2025 federal marginal brackets by filing status: [AGI lower bound, rate %]. Refresh each tax year.
     taxBrackets: {
@@ -91,5 +91,12 @@ HARP.config = {
   },
 
   // Overall score deductions (out of 100)
-  score: { perRisk: 15, perWarn: 6 }
+  score: { perRisk: 15, perWarn: 6 },
+
+  // Per-category diminishing score (overrides the linear weights for the listed categories): the first
+  // critical/moderate costs the most, each additional one less — so the gauge isn't tanked by pile-on.
+  // Tax: 1 critical => 60, 2 => 45; 1 moderate => 85.
+  categoryScoreScheme: {
+    tax: { firstCritical: 40, addlCritical: 15, firstModerate: 15, addlModerate: 8 }
+  }
 };
