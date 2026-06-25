@@ -39,7 +39,7 @@ HARP.assessment = (function () {
       legal: legal,
       findings: findings,
       counts: counts,
-      score: scoreFrom(counts, cfg),
+      score: scoreFromFindings(findings, cfg),
       categories: categoryScores(findings, cfg)
     };
   }
@@ -54,15 +54,23 @@ HARP.assessment = (function () {
     return CATEGORIES.map(function (c) {
       var own = findings.filter(function (f) { return c.match.indexOf(f.category) >= 0; });
       var counts = countSeverities(own);
-      var s = scoreFrom(counts, cfg);
+      var s = scoreFromFindings(own, cfg);
       return { key: c.key, label: c.label, score: s.value, band: s.band, counts: counts };
     });
   }
 
-  // Transparent 0-100 score: start at 100, deduct per finding by severity.
-  function scoreFrom(counts, cfg) {
-    var value = 100 - (counts.risk * cfg.score.perRisk) - (counts.warn * cfg.score.perWarn);
-    value = Math.max(0, Math.min(100, value));
+  // Transparent 0-100 score: start at 100 and deduct per finding by severity. A finding may carry an
+  // explicit `weight` to override the default deduction — used where a single issue should move the
+  // needle hard (e.g. an insurance gap).
+  function scoreFromFindings(findings, cfg) {
+    var deduction = 0;
+    findings.forEach(function (f) {
+      if (f.severity === 'risk') deduction += (f.weight != null ? f.weight : cfg.score.perRisk);
+      else if (f.severity === 'warn') deduction += (f.weight != null ? f.weight : cfg.score.perWarn);
+    });
+    return bandFor(Math.max(0, Math.min(100, 100 - deduction)));
+  }
+  function bandFor(value) {
     var band =
       value >= 80 ? 'Healthy' :
       value >= 60 ? 'Some attention needed' :

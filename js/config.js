@@ -44,14 +44,12 @@ HARP.config = {
     minGainAmount: 25000      // ...and only when the dollar gain is at least this material
   },
 
-  // Insurance adequacy. Total policy face value is compared two ways — to the economic value of
-  // future income, and to liabilities — on a sliding scale.
+  // Insurance adequacy as a single "insurance gap": total face value (payout) vs liabilities and vs
+  // future income (income x years to retirement). The gap level sets a score weight on one finding.
   insurance: {
-    significantShortfallBand: 0.5,   // face covering < 50% of a need => significantly under (risk); 50-99% => slightly under (warn)
-    incomeMethod: {
-      discountRatePct: 3,            // real discount rate for the economic value of future income
-      defaultYearsToRetirement: 20   // assumed earning horizon when the advisor does not provide one
-    }
+    significantShortfallBand: 0.5,   // payout below half a need (need >= ~2x payout) => critical, else moderate
+    defaultYearsToRetirement: 20,    // remaining working years assumed when not provided
+    gapDeductions: { none: 75, critical: 52, moderate: 30 }  // score weight by gap level (Insurance gauge ~25 / 48 / 70 / 100)
   },
 
   // Tax-bucket diversification
