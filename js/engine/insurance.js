@@ -11,8 +11,11 @@ HARP.insurance = (function () {
     return Math.max(0, (Number(income) || 0) * (life.baseIncomeMultiple + depAddon));
   }
 
-  // Rough "assets at risk" used to size umbrella coverage.
+  // Total assets for umbrella sizing and the estate asset-protection threshold. Prefers an explicit
+  // total when the advisor provides one, else estimates from the account buckets + home value.
   function estimatedAssets(profile) {
+    var explicit = Number(profile.assets) || 0;
+    if (explicit > 0) return explicit;
     var ins = profile.insurance || {};
     return (Number(profile.taxable) || 0) + (Number(profile.taxDeferred) || 0) +
            (Number(profile.taxFree) || 0) + (Number(ins.homeValue) || 0);
@@ -60,6 +63,32 @@ HARP.insurance = (function () {
           detail: 'Coverage of ' + m(coverage) + ' is in line with the estimated need (about ' + m(need) + ').' });
       }
       policies.push(row);
+    })();
+
+    // ---- Liabilities covered by life face amount (sliding scale) ----
+    (function () {
+      var liabilities = Number(profile.liabilities) || 0;
+      if (liabilities <= 0) return; // nothing to assess without a liabilities figure
+      var face = (ins.life && ins.life.has) ? (Number(ins.life.coverage) || 0) : 0;
+      if (face >= liabilities) {
+        findings.push({ category: 'Insurance', severity: 'ok', title: 'Liabilities are covered by life coverage',
+          detail: 'Life face amount of ' + m(face) + ' covers the ' + m(liabilities) + ' in total liabilities.' });
+        return;
+      }
+      var ratio = face / liabilities;
+      var shortfall = liabilities - face;
+      var band = (cfg.insurance.liabilityCoverage && cfg.insurance.liabilityCoverage.significantShortfallBand) || 0.5;
+      var significant = ratio < band;
+      findings.push({
+        category: 'Insurance',
+        severity: significant ? 'risk' : 'warn',
+        title: (significant ? 'Significantly underinsured' : 'Slightly underinsured') + ' — liabilities exceed life coverage',
+        detail: 'Life face amount of ' + m(face) + ' covers only ' + Math.round(ratio * 100) + '% of ' + m(liabilities) +
+          ' in liabilities — a shortfall of about ' + m(shortfall) + '. ' +
+          (significant
+            ? 'If the insured died today, the household could be left with substantial uncovered debt. Raising coverage to at least cover liabilities is a priority.'
+            : 'Consider raising coverage so the face amount fully covers outstanding liabilities.')
+      });
     })();
 
     // ---- Disability (only relevant with earned income) ----
