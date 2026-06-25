@@ -84,9 +84,8 @@ HARP.ui.forms = (function () {
   // ---------------------------------------------------------------- performance (most recent full year)
   function perfYear() { return new Date().getFullYear() - 1; }
   function buildPerformanceInputs() {
-    var y = perfYear();
     $('performance-inputs').innerHTML =
-      '<label>' + y + ' return (%) <span class="opt">(most recent full year)</span>' +
+      '<label>' + perfYear() + ' portfolio performance (%)' +
       '<input type="number" id="yearReturnPct" step="0.1" placeholder="e.g. 12.5" /></label>';
   }
 
