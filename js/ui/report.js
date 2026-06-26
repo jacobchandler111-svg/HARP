@@ -222,22 +222,75 @@ HARP.ui.report = (function () {
       : '<p class="op-clean">No critical or moderate issues in the completed sections.</p>';
     return '<div class="op-risks"><h3>Key risks</h3>' + body + '</div>';
   }
-  // Recommendations: the suggested actions (each finding's detail), in their own section.
-  // Use the last sentence of the detail — usually the actionable recommendation — to keep it short.
-  function shortAction(detail) {
-    var m = String(detail || '').match(/[^.!?]+[.!?]+/g);
-    return (m && m.length) ? m[m.length - 1].trim() : (detail || '');
+  // Recommendations: ONE tailored, action-oriented recommendation per area (not a restatement of the
+  // key risks). Multiple risks in an area roll up into a single "speak with our team to ..." action.
+  function groupByArea(shown) {
+    var g = { investments: [], tax: [], legal: [], insurance: [] };
+    shown.forEach(function (f) { var k = catKeyOfFinding(f); if (g[k]) g[k].push(f); });
+    return g;
+  }
+  function investmentRec(fs) {
+    var tickers = [], sectors = [], perf = false, gains = false;
+    fs.forEach(function (f) {
+      if (f.category === 'Investment concentration') { var m = f.title.match(/^(\S+)/); if (m) tickers.push(m[1]); }
+      else if (f.category === 'Sector exposure') { var s = f.title.match(/^(.+?) sector is/); if (s) sectors.push(s[1]); }
+      else if (f.category === 'Investment performance') perf = true;
+      else if (f.category === 'Unrealized gains') gains = true;
+    });
+    var bits = [];
+    if (tickers.length) bits.push('trimming the concentrated positions (' + tickers.join(', ') + ')');
+    if (sectors.length) bits.push('reducing your ' + naturalJoin(sectors) + ' concentration');
+    if (gains) bits.push('managing the embedded gains tax-efficiently');
+    if (perf) bits.push('pursuing a stronger risk-adjusted return relative to the market');
+    return 'Speak with one of our advisors to build a more diversified investment plan' +
+      (bits.length ? ' — ' + naturalJoin(bits) : '') + '.';
+  }
+  function taxRec(fs) {
+    var standard = fs.some(function (f) { return /standard deduction/i.test(f.title); });
+    return 'Speak with our accounting team to put a more tax-efficient plan in place' +
+      (standard ? ' — at this income there are likely deductions and planning opportunities going unclaimed.' : '.');
+  }
+  function legalRec(fs) {
+    var missing = [], overdue = [];
+    fs.forEach(function (f) {
+      var mm = f.title.match(/^Missing:\s*(.+)$/i);
+      if (mm) { missing.push(mm[1].charAt(0).toLowerCase() + mm[1].slice(1)); return; }
+      if (/asset-protection trust/i.test(f.title)) { missing.push('an asset-protection trust'); return; }
+      var od = f.title.match(/^(Will|Trust)/i);
+      if (od && /out of date/i.test(f.title)) overdue.push(od[1].toLowerCase());
+    });
+    var parts = [];
+    if (overdue.length) parts.push('review and update your ' + naturalJoin(overdue));
+    if (missing.length) parts.push('put ' + naturalJoin(missing) + ' in place');
+    return 'Meet with our legal team to ' + (parts.length ? naturalJoin(parts) : 'review your estate plan') + '.';
+  }
+  function insuranceRec(fs) {
+    var none = fs.some(function (f) { return /no insurance/i.test(f.title); });
+    var under = fs.some(function (f) { return /underinsured/i.test(f.title); });
+    var aged = fs.some(function (f) { return /out of date/i.test(f.title); });
+    var acts = [];
+    if (none) acts.push('put appropriate coverage in place');
+    if (under) acts.push('increase your coverage to close the gap against your liabilities and future income');
+    if (aged) acts.push('review your existing policy');
+    return 'Speak with one of our advisors to ' + (acts.length ? naturalJoin(acts) : 'review your coverage') + '.';
   }
   function recommendations(a, filled) {
     var s = severityFindings(a, filled);
     if (!s.shown.length && !s.trimmed) return '';
-    var body = s.shown.map(function (f) {
-      return '<div class="op-rec"><span class="op-rec-title">' + esc(f.title) + '</span>' +
-        '<span class="op-rec-detail">' + esc(shortAction(f.detail)) + '</span></div>';
+    var g = groupByArea(s.shown);
+    var areas = [
+      { key: 'investments', label: 'Investments', fn: investmentRec },
+      { key: 'tax', label: 'Tax', fn: taxRec },
+      { key: 'legal', label: 'Legal & estate', fn: legalRec },
+      { key: 'insurance', label: 'Insurance', fn: insuranceRec }
+    ];
+    var body = areas.filter(function (b) { return g[b.key].length; }).map(function (b) {
+      return '<div class="op-rec"><span class="op-rec-title">' + b.label + '</span>' +
+        '<span class="op-rec-detail">' + esc(b.fn(g[b.key])) + '</span></div>';
     }).join('');
+    if (!body) body = '<p class="op-clean">No actions needed in the completed sections.</p>';
     if (s.trimmed > 0) {
-      body += '<div class="op-trim">+ ' + s.trimmed + ' minor note' + (s.trimmed === 1 ? '' : 's') +
-        ' reviewed and omitted from this summary.</div>';
+      body += '<div class="op-trim">+ ' + s.trimmed + ' minor note' + (s.trimmed === 1 ? '' : 's') + ' reviewed.</div>';
     }
     return '<div class="op-recs"><h3>Recommendations</h3>' + body + '</div>';
   }
