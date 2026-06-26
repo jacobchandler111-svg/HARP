@@ -137,8 +137,10 @@ HARP.ui.report = (function () {
                    (a.concentration && a.concentration.total > 0)),
       tax: !!((a.tax && a.tax.total > 0) || (Number(p.income) || 0) > 0 ||
            (Number(p.agi) || 0) > 0 || (Number(p.totalTax) || 0) > 0),
-      insurance: !!(ins.hasPolicies || (ins.policyTypes && ins.policyTypes.length) ||
-                 (Number(ins.totalFaceValue) || 0) > 0),
+      // The insurance Yes/No always carries a definite answer (the toggle defaults to "No"), and
+      // "no insurance" is a real, scored state (15). So a definite Yes or No counts as assessed and is
+      // included in the overall — not shown as "information needed" and dropped from the average.
+      insurance: typeof ins.hasPolicies === 'boolean' || (Number(ins.totalFaceValue) || 0) > 0,
       legal: !!(p.legal && Object.keys(p.legal).some(function (k) { return p.legal[k]; }))
     };
   }
