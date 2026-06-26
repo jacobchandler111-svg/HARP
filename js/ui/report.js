@@ -37,6 +37,15 @@ HARP.ui.report = (function () {
       b1.x.toFixed(2) + ',' + b1.y.toFixed(2) + ' ' + b2.x.toFixed(2) + ',' + b2.y.toFixed(2) +
       '" fill="#1c2430"/>';
   }
+  // Keep the triangle on a colored arc instead of in an inter-zone gap: a raw 100 would point to the
+  // gap just past green, a 40 or 80 to the gaps between zones. Map the score's band onto its own arc
+  // segment (0-40 -> red arc, 40-80 -> yellow arc, 80-100 -> green arc) using the same gap `g`.
+  function markerPos(s, g) {
+    var h = g / 2;
+    if (s < 40) return h + (s / 40) * (40 - 2 * h);
+    if (s < 80) return (40 + h) + ((s - 40) / 40) * (40 - 2 * h);
+    return (80 + h) + ((s - 80) / 20) * (20 - 2 * h);
+  }
   function centerWrap(cx, line1, line2, fs) {
     return '<text x="50%" y="50%" text-anchor="middle" fill="var(--muted)" ' +
       'style="font-size:' + fs + 'px;font-weight:600">' +
@@ -66,7 +75,7 @@ HARP.ui.report = (function () {
       zoneArc(cx, r, stroke, g / 2, 40 - g / 2, ZONE_RED) +
       zoneArc(cx, r, stroke, 40 + g / 2, 80 - g / 2, ZONE_YELLOW) +
       zoneArc(cx, r, stroke, 80 + g / 2, 100 - g / 2, ZONE_GREEN) +
-      marker(cx, r, stroke, ts, score) +
+      marker(cx, r, stroke, ts, markerPos(score, g)) +
       '<text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" class="gauge-num" ' +
       'style="font-size:' + Math.round(size * 0.2) + 'px">' + score + '</text>' +
       '</svg>';
