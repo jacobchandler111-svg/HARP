@@ -80,6 +80,10 @@ HARP.legal = (function () {
         detail: 'Estimated assets of about ' + HARP.util.money(assets) + ' exceed ' + HARP.util.money(threshold) +
           ', but no asset-protection trust is in place. Without one, these assets are more exposed to creditors ' +
           'and litigation. Discuss whether an asset-protection trust is appropriate.' });
+    } else if (!hasTrust) {
+      findings.push({ category: 'Legal / estate', severity: 'warn', title: 'No trust in place',
+        detail: 'No trust is set up. A trust can help control how assets pass to heirs, avoid probate, and add ' +
+          'privacy. Worth discussing whether one fits the household.' });
     }
 
     // ---- Remaining core documents ----

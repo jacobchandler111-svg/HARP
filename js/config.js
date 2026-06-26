@@ -96,10 +96,12 @@ HARP.config = {
   // Overall score deductions (out of 100)
   score: { perRisk: 15, perWarn: 6 },
 
-  // Per-category diminishing score (overrides the linear weights for the listed categories): the first
-  // critical/moderate costs the most, each additional one less — so the gauge isn't tanked by pile-on.
-  // Tax: 1 critical => 60, 2 => 45; 1 moderate => 85.
+  // Per-category diminishing score: the first critical/moderate costs the most, each additional one less,
+  // so a gauge isn't tanked by pile-on. Investments/legal: 1 critical ~67, 2 ~44, 3 ~21, 2 crit + 1 mod ~34,
+  // 1 moderate ~90. Tax (gentler): 1 critical => 60, 2 => 45; 1 moderate => 85.
   categoryScoreScheme: {
-    tax: { firstCritical: 40, addlCritical: 15, firstModerate: 15, addlModerate: 8 }
+    investments: { firstCritical: 33, addlCritical: 23, firstModerate: 10, addlModerate: 8 },
+    legal:       { firstCritical: 33, addlCritical: 23, firstModerate: 10, addlModerate: 8 },
+    tax:         { firstCritical: 40, addlCritical: 15, firstModerate: 15, addlModerate: 8 }
   }
 };
