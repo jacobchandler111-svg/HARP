@@ -170,6 +170,8 @@ button:hover { filter: brightness(0.97); }
 .pct-field input { width: 120px; }
 .pct-suffix { color: var(--muted); font-weight: 600; }
 .h-basis { color: var(--muted); font-size: 13px; }
+/* Portfolio information: stack value over performance (one per line, full width). */
+#performance-inputs { grid-template-columns: 1fr; }
 
 /* report: HARP wordmark (right header), executive summary, recommendations */
 .op-harp { font-family: var(--font-display); font-size: 28px; font-weight: 600; color: var(--brand-ink); letter-spacing: 1.5px; line-height: 1; }
