@@ -329,13 +329,16 @@ HARP.ui.report = (function () {
     var completed = cats.filter(function (c) { return filled[c.key]; }).map(function (c) { return c.score; });
     var overall = completed.length ? Math.round(completed.reduce(function (s, v) { return s + v; }, 0) / completed.length) : null;
 
-    // Body in <tbody>, disclosures in <tfoot>: a table-footer-group repeats on every printed page
-    // and reserves its own space, so disclosures print on each page without @page margins (which
-    // would bring back the browser's own header/footer). On screen the table renders as plain blocks
-    // (see .op-sheet in styles.css), so the layout is unchanged.
+    // Header in <thead>, body in <tbody>, disclosures in <tfoot>: in print the thead/tfoot become a
+    // table-header-group / table-footer-group, which the browser repeats at the top and bottom of
+    // EVERY page (reserving their space), so the same Brookhaven header and disclosures print on each
+    // page and the body flows in between — no @page margins needed, so the browser's own header/footer
+    // stay suppressed. On screen the table renders as plain blocks (see .op-sheet in styles.css), so
+    // the layout is unchanged: header, body, footer stacked.
     document.getElementById('report').innerHTML =
-      '<table class="op-sheet"><tbody class="op-body"><tr><td>' +
-        header(a) +
+      '<table class="op-sheet">' +
+      '<thead class="op-head"><tr><td>' + header(a) + '</td></tr></thead>' +
+      '<tbody class="op-body"><tr><td>' +
         scores(a, cats, filled, overall) +
         keyRisks(a, filled) +
         recommendations(a, filled) +

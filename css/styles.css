@@ -105,12 +105,13 @@ button:hover { filter: brightness(0.97); }
 
 /* ---- the one-pager ---- */
 .onepager { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 28px 32px; box-shadow: var(--shadow); }
-/* The report body is wrapped in a table so its <tfoot> disclosures repeat on every PRINTED page
-   (see print.css). On screen the table + rows/cells collapse to plain blocks, so the layout is
-   unchanged: body (tbody) then footer (tfoot), stacked. */
+/* The report is wrapped in a table so its <thead> header and <tfoot> disclosures repeat on every
+   PRINTED page (see print.css). On screen the table + rows/cells collapse to plain blocks, so the
+   layout is unchanged: header (thead), body (tbody), footer (tfoot), stacked. */
 .op-sheet { width: 100%; }
-.op-sheet, .op-sheet > tbody, .op-sheet > tfoot, .op-sheet > tbody > tr,
-.op-sheet > tfoot > tr, .op-sheet > tbody > tr > td, .op-sheet > tfoot > tr > td { display: block; }
+.op-sheet, .op-sheet > thead, .op-sheet > tbody, .op-sheet > tfoot,
+.op-sheet > thead > tr, .op-sheet > tbody > tr, .op-sheet > tfoot > tr,
+.op-sheet > thead > tr > td, .op-sheet > tbody > tr > td, .op-sheet > tfoot > tr > td { display: block; }
 .op-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; border-bottom: 3px solid var(--brand-ink); padding-bottom: 12px; margin-bottom: 14px; }
 .op-firm { display: flex; flex-direction: column; }
 .firm-name { font-family: var(--font-display); font-size: 28px; font-weight: 600; letter-spacing: .3px; color: var(--brand-ink); }
