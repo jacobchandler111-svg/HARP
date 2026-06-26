@@ -260,6 +260,19 @@ HARP.ui.forms = (function () {
     form.addEventListener('focusout', function (e) {
       if (e.target && e.target.classList && e.target.classList.contains('dollar')) e.target.value = commaFmt(e.target.value);
     });
+    // Focusing a numeric field selects its whole value so the first keystroke replaces it — you never
+    // end up typing in front of an existing "0" (e.g. "0" + "20000" reading as "020,000"). Delegated
+    // so dynamically-added holding rows are covered. `armed` keeps the click's mouseup from collapsing
+    // the programmatic selection back to a caret.
+    var NUMERIC_SEL = 'input.dollar, input[type="number"]';
+    var armed = false;
+    form.addEventListener('focusin', function (e) {
+      var t = e.target;
+      if (t && t.matches && t.matches(NUMERIC_SEL)) { t.select(); armed = true; }
+    });
+    form.addEventListener('mouseup', function (e) {
+      if (armed) { e.preventDefault(); armed = false; }
+    });
   }
 
   // ---------------------------------------------------------------- profile
