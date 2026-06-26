@@ -48,6 +48,21 @@ HARP.accounting = (function () {
       });
     }
 
+    // AGI at or below the standard deduction => taxable income near zero. Unusual for a wealth client:
+    // below the deduction is a red flag (critical); right around it is a moderate concern.
+    if (standardDeduction > 0 && agi > 0 && agi < standardDeduction * (Number(acfg.lowAgiModerateBand) || 1.1)) {
+      var critLow = agi < standardDeduction;
+      findings.push({
+        category: 'Accounting / tax',
+        severity: critLow ? 'risk' : 'warn',
+        title: critLow ? 'AGI is below the standard deduction' : 'AGI is barely above the standard deduction',
+        detail: 'AGI of ' + m(agi) + ' is ' + (critLow ? 'below' : 'at about') + ' the ' + filingStatus +
+          ' standard deduction (' + m(standardDeduction) + '), so taxable income is near zero. For a household at ' +
+          'this level that is unusual and worth a review — confirm the figures and whether low-bracket room is going ' +
+          'unused (e.g. Roth conversions, or realizing gains while in low brackets).'
+      });
+    }
+
     // A higher earner (by federal bracket on AGI) is worth a tax-planning review — severity scales with the
     // bracket: top brackets => critical, otherwise moderate. The standard-deduction observation
     // (income - agi <= standard) is added as context, NOT a gate, so high earners always surface.

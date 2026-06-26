@@ -77,6 +77,7 @@ HARP.config = {
     // critical at/above the critical bracket. The bracket is read off AGI (no tax is calculated).
     bracketModerateMin: 24,
     bracketCriticalMin: 35,
+    lowAgiModerateBand: 1.1,         // AGI below the standard deduction => critical; up to this x standard => moderate
     // 2025 federal marginal brackets by filing status: [AGI lower bound, rate %]. Refresh each tax year.
     taxBrackets: {
       'Single':                    [[0,10],[11925,12],[48475,22],[103350,24],[197300,32],[250525,35],[626350,37]],
