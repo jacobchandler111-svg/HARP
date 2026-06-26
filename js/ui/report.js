@@ -309,14 +309,12 @@ HARP.ui.report = (function () {
   function footer() {
     var b = HARP.config.branding;
     var firm = b.firmName || 'Brookhaven';
-    var contact = [firm + ' · Integrated Wealth Solutions', b.contact.phone, b.contact.email, b.contact.website]
+    var contact = [firm + ' · Integrated Wealth Strategies', b.contact.phone, b.contact.email, b.contact.website]
       .filter(Boolean).map(esc).join(' · ');
-    var disc = 'This Health & Risk Profile is provided by ' + firm + ' for informational and educational ' +
-      'purposes only and does not constitute financial, investment, tax, legal, or insurance advice, nor an ' +
-      'offer or solicitation to buy or sell any security or product. Figures are estimates based on the ' +
-      'information provided and on general assumptions that may not reflect your specific circumstances, and ' +
-      'are not guarantees of future results. Investing involves risk, including possible loss of principal. ' +
-      'Make insurance, tax, and estate decisions only after consulting appropriately licensed professionals.';
+    // Disclosure text is owned by the engine in config.branding.disclaimer (single source of truth);
+    // fall back to a short notice if config doesn't define one.
+    var disc = b.disclaimer || ('This report is informational only and does not constitute financial, tax, ' +
+      'legal, or insurance advice. Please consult the appropriate licensed professional before acting.');
     return '<div class="op-footer">' +
       '<div class="op-contact">' + contact + '</div>' +
       '<div class="op-disc"><strong>Disclosures.</strong> ' + esc(disc) + ' Prepared ' + today() + '.</div>' +
@@ -331,12 +329,18 @@ HARP.ui.report = (function () {
     var completed = cats.filter(function (c) { return filled[c.key]; }).map(function (c) { return c.score; });
     var overall = completed.length ? Math.round(completed.reduce(function (s, v) { return s + v; }, 0) / completed.length) : null;
 
+    // Body in <tbody>, disclosures in <tfoot>: a table-footer-group repeats on every printed page
+    // and reserves its own space, so disclosures print on each page without @page margins (which
+    // would bring back the browser's own header/footer). On screen the table renders as plain blocks
+    // (see .op-sheet in styles.css), so the layout is unchanged.
     document.getElementById('report').innerHTML =
-      header(a) +
-      scores(a, cats, filled, overall) +
-      keyRisks(a, filled) +
-      recommendations(a, filled) +
-      footer();
+      '<table class="op-sheet"><tbody class="op-body"><tr><td>' +
+        header(a) +
+        scores(a, cats, filled, overall) +
+        keyRisks(a, filled) +
+        recommendations(a, filled) +
+      '</td></tr></tbody>' +
+      '<tfoot class="op-foot"><tr><td>' + footer() + '</td></tr></tfoot></table>';
   }
 
   return { render: render, gauge: gauge };

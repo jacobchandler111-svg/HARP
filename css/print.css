@@ -20,6 +20,16 @@ body { background: #fff; color: #000; }
 
 .onepager { border: none; border-radius: 0; box-shadow: none; padding: 14mm; font-size: 12px; }
 
+/* The report body is a table; in print its <tfoot> becomes a table-footer-group, which the browser
+   repeats at the bottom of EVERY page and reserves space for — so the disclosures print on each page.
+   No @page margin is needed for this, so the browser's own header/footer stay suppressed. */
+.op-sheet { display: table; width: 100%; }
+.op-sheet > tbody { display: table-row-group; }
+.op-sheet > tfoot { display: table-footer-group; }
+.op-sheet > tbody > tr, .op-sheet > tfoot > tr { display: table-row; }
+.op-sheet > tbody > tr > td, .op-sheet > tfoot > tr > td { display: table-cell; }
+.op-foot { padding-top: 6mm; }   /* a little breathing room above the repeated footer */
+
 /* Keep these blocks intact across the page break (allows a clean 2nd page). */
 .op-header, .op-cats, .op-overall-row, .op-finding, .op-footer { page-break-inside: avoid; }
 .op-risks h3 { page-break-after: avoid; }
