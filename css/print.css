@@ -1,7 +1,9 @@
 /* Print / "Save as PDF" — prints the preview report; flows across 1-2 pages as needed. */
+/* margin:0 suppresses the browser's own print header/footer (page title top-center, date, URL).
+   The page whitespace is moved into the report's own padding below so the layout is unchanged. */
 @page {
   size: letter;
-  margin: 14mm 14mm;
+  margin: 0;
 }
 
 /* Hide app chrome and the input page — leave just the report. */
@@ -16,7 +18,7 @@ body { background: #fff; color: #000; }
 .wrap { max-width: 100%; margin: 0; padding: 0; }
 #screen-preview { display: block !important; }
 
-.onepager { border: none; border-radius: 0; box-shadow: none; padding: 0; font-size: 12px; }
+.onepager { border: none; border-radius: 0; box-shadow: none; padding: 14mm; font-size: 12px; }
 
 /* Keep these blocks intact across the page break (allows a clean 2nd page). */
 .op-header, .op-cats, .op-overall-row, .op-finding, .op-footer { page-break-inside: avoid; }
