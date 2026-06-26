@@ -48,23 +48,22 @@ HARP.accounting = (function () {
       });
     }
 
-    // In a meaningful bracket but appears to take only the standard deduction — possible missed tax
-    // savings. Severity scales with the bracket: top brackets => critical, otherwise moderate. Inferred
-    // from deductions-to-AGI (income - agi) being no more than the standard deduction.
-    var onlyStandard = standardDeduction > 0 && agi > 0 && (income - agi) <= standardDeduction;
-    if (onlyStandard && bracket != null && bracket >= (acfg.bracketModerateMin || 22)) {
+    // A higher earner (by federal bracket on AGI) is worth a tax-planning review — severity scales with the
+    // bracket: top brackets => critical, otherwise moderate. The standard-deduction observation
+    // (income - agi <= standard) is added as context, NOT a gate, so high earners always surface.
+    if (bracket != null && bracket >= (acfg.bracketModerateMin || 24)) {
       var critical = bracket >= (acfg.bracketCriticalMin || 35) || businessIncome > 0;
+      var onlyStandard = standardDeduction > 0 && agi > 0 && (income - agi) <= standardDeduction;
       findings.push({
         category: 'Accounting / tax',
         severity: critical ? 'risk' : 'warn',
-        title: 'In the ' + bracket + '% tax bracket on only the standard deduction',
-        detail: 'AGI of ' + m(agi) + ' falls in the ' + bracket + '% federal bracket (' + filingStatus +
-          '), but it looks like only the standard deduction (' + m(standardDeduction) + ') is being used. ' +
-          (businessIncome > 0
-            ? 'With business income on the return, relying on the standard deduction likely leaves real deductions unclaimed — our accounting team should review.'
-            : critical
-              ? 'At this income there is real potential for tax savings — itemized, retirement, or business deductions and other planning. Our accounting team should review.'
-              : 'There may be deductions or tax savings worth exploring — our accounting team can help.')
+        title: critical ? 'High income — a tax-strategy review is recommended' : 'Higher earner — tax planning may help',
+        detail: 'AGI of ' + m(agi) + ' falls in the ' + bracket + '% federal bracket (' + filingStatus + '). ' +
+          (critical
+            ? 'At this income, a proactive tax-strategy overview — deductions, retirement / entity structuring, charitable planning — is well worth a look with our team.'
+            : 'As a higher earner, a review with our tax team could surface deductions or other planning opportunities.') +
+          (onlyStandard ? ' It also looks like only the standard deduction (' + m(standardDeduction) + ') is being used.' : '') +
+          (businessIncome > 0 ? ' Business income on the return makes unclaimed deductions especially likely.' : '')
       });
     }
 
