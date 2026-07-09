@@ -44,11 +44,12 @@ HARP.config = {
   // Assumed retirement age — used to derive remaining working years from the client's age (insurance).
   retirementAge: 65,
 
-  // Embedded / unrealized gains — needs a cost basis on the holding. A large low-basis position is
-  // both an investment-concentration and an upcoming-tax-event concern (flagged in both domains).
+  // Embedded / unrealized gains — assessed cumulatively across the portfolio (gains and losses net).
+  // A holding counts as "large" when its gain is over embeddedGainPct of cost AND at least minGainAmount;
+  // one consolidated flag is raised when a large gain exists and the net embedded gain is positive.
   gains: {
-    embeddedGainPct: 100,     // unrealized gain >= this % of cost basis (value >= ~2x basis)
-    minGainAmount: 25000      // ...and only when the dollar gain is at least this material
+    embeddedGainPct: 50,      // a stock's unrealized gain > this % of its cost basis is "large"
+    minGainAmount: 25000      // ...and only when that stock's dollar gain is at least this material
   },
 
   // Insurance adequacy: total face value (payout) vs liabilities and vs future income (income x years to
@@ -105,7 +106,7 @@ HARP.config = {
   // so a gauge isn't tanked by pile-on. Investments/legal: 1 critical ~67, 2 ~44, 3 ~21, 2 crit + 1 mod ~34,
   // 1 moderate ~90. Tax (gentler): 1 critical => 60, 2 => 45; 1 moderate => 85.
   categoryScoreScheme: {
-    investments: { firstCritical: 33, addlCritical: 23, firstModerate: 10, addlModerate: 8 },
+    investments: { firstCritical: 30, addlCritical: 20, firstModerate: 10, addlModerate: 8 },
     legal:       { firstCritical: 33, addlCritical: 23, firstModerate: 10, addlModerate: 8 },
     tax:         { firstCritical: 40, addlCritical: 15, firstModerate: 15, addlModerate: 8 }
   }
