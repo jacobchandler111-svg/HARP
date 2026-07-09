@@ -20,9 +20,15 @@ HARP.sample = {
   taxDeferred: 600000,
   taxFree: 0,
 
-  // Most recent full-year (2025) portfolio return — below the S&P 500's recent annualized (~23%), so it
-  // flags as trailing the market.
+  // Primary goal: growth — judged on last-year return vs. the S&P. (The income fields below are populated
+  // too, so switching the goal to "Income" also demonstrates the income-vs-withdrawal shortfall check.)
+  goal: 'growth',
+  // Most recent full-year (2025) portfolio return — below the S&P 500's recent annualized (~23%), trails.
   yearReturnPct: 5,
+  dividendPct: 1.8,
+  fixedIncomeValue: 150000,   // bonds, etc.; sums into the (now computed) total portfolio value
+  fixedIncomeIncome: 6000,
+  monthlyDrawdown: 5000,
 
   // Years until retirement — drives the economic-value-of-future-income method.
   yearsToRetirement: 20,

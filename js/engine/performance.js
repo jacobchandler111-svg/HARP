@@ -41,6 +41,8 @@ HARP.performance = (function () {
       findings: findings
     };
     if (!provided) return result;
+    // Income-goal households aren't judged on return vs. the market — see the income module instead.
+    if (profile.goal === 'income') return result;
 
     var gap = clientReturn - benchmark;
     result.gapPct = gap;
