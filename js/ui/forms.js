@@ -116,7 +116,9 @@ HARP.ui.forms = (function () {
         '<label for="goal-growth">Growth</label>' +
         '<input type="radio" name="goal" id="goal-income" value="income">' +
         '<label for="goal-income">Income</label>' +
-      '</span></div>';
+      '</span></div>' +
+      '<div class="q-row"><span class="q-label">What is the client’s current age?</span>' +
+        '<input type="number" class="q-num" id="age" min="0" step="1" placeholder="0" /></div>';
   }
   function goalVal() { var g = document.querySelector('input[name="goal"]:checked'); return g ? g.value : 'growth'; }
   function setGoal(v) { var e = $((v === 'income') ? 'goal-income' : 'goal-growth'); if (e) e.checked = true; }
@@ -336,6 +338,7 @@ HARP.ui.forms = (function () {
       taxDeferred: num('taxDeferred'),
       taxFree: num('taxFree'),
       goal: goalVal(),
+      age: numOrBlank('age'),
       yearReturnPct: numOrBlank('yearReturnPct'),
       fixedIncomeValue: num('fixedIncomeValue'),
       fixedIncomeIncome: num('fixedIncomeIncome'),
@@ -354,6 +357,7 @@ HARP.ui.forms = (function () {
     setVal('income', p.income); setVal('agi', p.agi); setVal('totalTax', p.totalTax); setVal('dependents', p.dependents);
     setVal('taxable', p.taxable); setVal('taxDeferred', p.taxDeferred); setVal('taxFree', p.taxFree);
     setGoal(p.goal);
+    setVal('age', p.age);
     setVal('yearReturnPct', p.yearReturnPct);
     setVal('fixedIncomeValue', p.fixedIncomeValue);
     setVal('fixedIncomeIncome', p.fixedIncomeIncome);

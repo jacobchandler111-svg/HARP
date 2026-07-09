@@ -24,6 +24,7 @@ HARP.sample = {
   // demonstrates the income-vs-withdrawal shortfall check.) The return isn't compared to the market here
   // because this portfolio isn't 100% stock (it has fixed income).
   goal: 'growth',
+  age: 45,                    // ~65% stock guideline (110 - 45); 82% actual is within tolerance
   yearReturnPct: 5,
   fixedIncomeValue: 150000,   // bonds, etc.; sums into the (now computed) total portfolio value
   fixedIncomeIncome: 6000,

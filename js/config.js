@@ -36,6 +36,11 @@ HARP.config = {
     }
   },
 
+  // Age-based "prudent" allocation guideline: ~(base - age)% in stocks. Actual stock % deviating from
+  // that by more than moderateDeviation points is a moderate concern; past criticalDeviation a critical
+  // — but being under-weighted in stocks is only critical for a growth goal (see allocation.js).
+  allocation: { base: 110, moderateDeviation: 25, criticalDeviation: 50 },
+
   // Embedded / unrealized gains — needs a cost basis on the holding. A large low-basis position is
   // both an investment-concentration and an upcoming-tax-event concern (flagged in both domains).
   gains: {
