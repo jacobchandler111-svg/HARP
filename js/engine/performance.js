@@ -41,25 +41,27 @@ HARP.performance = (function () {
       findings: findings
     };
     if (!provided) return result;
-    // Income-goal households aren't judged on return vs. the market — see the income module instead.
-    if (profile.goal === 'income') return result;
+    // Only compare to the market for a growth-goal, 100%-stock portfolio: a mix with fixed income is
+    // reasonably aiming for less, so the comparison isn't apt. And even when it applies, a shortfall is
+    // context (info), not a scored ding — beating the market isn't everyone's goal.
+    var fixedValue = Number(profile.fixedIncomeValue) || 0;
+    if (profile.goal !== 'growth' || fixedValue > 0) return result;
 
     var gap = clientReturn - benchmark;
     result.gapPct = gap;
 
     if (gap < -tolerance) {
       result.status = 'underperform';
-      var lead = clientReturn > 0 ? 'The portfolio has been making money, but its ' : 'The ';
-      findings.push({ category: 'Investment performance', severity: 'warn',
-        weight: cfg.investmentWeights && cfg.investmentWeights.moderate,
-        title: 'Returns are trailing the S&P 500',
-        detail: lead + periodLabel + ' return of ' + pct(clientReturn) + ' trailed the ' + benchmarkName +
-          '’s recent performance. There may be room to do better — an area we may be able to help with.' });
+      findings.push({ category: 'Investment performance', severity: 'info',
+        title: periodLabel + ' return trailed the ' + benchmarkName,
+        detail: 'The ' + periodLabel + ' return of ' + pct(clientReturn) + ' was below the ' + benchmarkName +
+          '’s long-run average of about ' + pct(benchmark) + '. Shown for context — for a growth-oriented, ' +
+          'all-stock portfolio there may be room to do better.' });
     } else {
       result.status = 'meets';
       findings.push({ category: 'Investment performance', severity: 'ok',
         title: periodLabel + ' return kept pace with the market',
-        detail: 'At or above the ' + benchmarkName + '’s recent performance.' });
+        detail: 'At or above the ' + benchmarkName + '’s long-run average of about ' + pct(benchmark) + '.' });
     }
 
     return result;

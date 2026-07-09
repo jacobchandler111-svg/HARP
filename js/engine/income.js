@@ -11,13 +11,16 @@ HARP.income = (function () {
     var goal = profile.goal || 'growth';
     // Compute the split from source data so the engine doesn't depend on the UI's derived portfolioValue.
     var fixedValue = Number(profile.fixedIncomeValue) || 0;
-    var stockValue = (profile.holdings || []).reduce(function (s, h) { return s + (Number(h.value) || 0); }, 0);
+    var holdings = profile.holdings || [];
+    var stockValue = holdings.reduce(function (s, h) { return s + (Number(h.value) || 0); }, 0);
     var portfolio = stockValue + fixedValue;
-    var dividendPct = Number(profile.dividendPct) || 0;
     var fixedIncomeIncome = Number(profile.fixedIncomeIncome) || 0;
     var monthlyDraw = Number(profile.monthlyDrawdown) || 0;
 
-    var stockDividends = stockValue * (dividendPct / 100);
+    // Stock dividends are backed into from each holding's own yield: sum(value x yield%).
+    var stockDividends = holdings.reduce(function (s, h) {
+      return s + (Number(h.value) || 0) * ((Number(h.dividendYield) || 0) / 100);
+    }, 0);
     var annualIncome = stockDividends + fixedIncomeIncome;
     var annualDraw = monthlyDraw * 12;
     var net = annualIncome - annualDraw;

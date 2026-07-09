@@ -25,18 +25,14 @@ HARP.config = {
   // = critical; performance / embedded-gains = moderate. Tuned so 1 critical ~ mid-yellow, 2 ~ red.
   investmentWeights: { critical: 33, moderate: 10 },
 
-  // Investment performance: the client's most recent full-year return is compared to TWO benchmarks —
-  // a fixed long-run market assumption, and the actual annualized S&P 500 return for the last 3 years.
+  // Investment performance: a growth-goal, 100%-stock portfolio's most recent full-year return is
+  // compared to the S&P 500's long-run average (~10%/yr). This is context only, not a scored ding, and
+  // is skipped for mixed portfolios (which reasonably aim for less). See performance.js / income.js.
   performance: {
     benchmarkName: 'S&P 500',
     tolerancePct: 0,              // any underperformance vs the benchmark flags
-    // Single benchmark = the actual S&P 500 recent annualized return (with dividends), looked up —
-    // REFRESH ANNUALLY. annualizedPct is the geometric mean: ((1.263)(1.250)(1.179))^(1/3)-1 ~= 23.0%.
-    // Sources: slickcharts / First Trust / RBC.
     trailing3yr: {
-      years: '2023-2025',
-      annualReturnsPct: [26.3, 25.0, 17.9],
-      annualizedPct: 23.0
+      annualizedPct: 10.0         // S&P 500 long-run average annual return
     }
   },
 
