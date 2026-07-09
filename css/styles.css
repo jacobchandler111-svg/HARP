@@ -81,8 +81,8 @@ input:focus, select:focus { outline: 2px solid var(--brand); outline-offset: 0; 
 
 /* ---- holdings table ---- */
 table.holdings { width: 100%; border-collapse: collapse; }
-table.holdings th { font-family: var(--font-mono); text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 4px 6px; }
-table.holdings th.num, table.holdings td.num { text-align: right; }
+table.holdings th { font-family: var(--font-mono); text-align: center; font-weight: 700; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--brand-ink); padding: 4px 6px; }
+table.holdings td.num { text-align: right; }
 table.holdings td { padding: 3px 6px; }
 table.holdings input, table.holdings select { width: 100%; }
 
