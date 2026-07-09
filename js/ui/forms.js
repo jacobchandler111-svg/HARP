@@ -44,15 +44,14 @@ HARP.ui.forms = (function () {
     }).join('');
   }
   function addHoldingRow(h) {
-    h = h || { ticker: '', name: '', sector: '', value: '' };
+    h = h || { ticker: '', name: '', sector: '', value: '', costBasis: '' };
     var tr = document.createElement('tr');
-    // Cost basis is not a manual field — it only arrives from a scanned statement (Phase 2). Keep it
-    // invisibly on the row so loaded/scanned data round-trips and the embedded-gain check still works.
-    tr.dataset.costBasis = (h.costBasis == null ? '' : h.costBasis);
+    // Cost basis is now an optional manual column (blank is fine); it still feeds the embedded-gain check.
     tr.innerHTML =
       '<td><input type="text" class="h-ticker" value="' + esc(h.ticker) + '" placeholder="AAPL" /></td>' +
       '<td><select class="h-sector">' + sectorOptions(h.sector) + '</select></td>' +
       '<td class="num"><input type="text" inputmode="decimal" class="h-value dollar" value="' + esc(commaFmt(h.value)) + '" placeholder="0" /></td>' +
+      '<td class="num"><input type="text" inputmode="decimal" class="h-basis dollar" value="' + esc(commaFmt(h.costBasis)) + '" placeholder="0" /></td>' +
       '<td><button type="button" class="icon-btn" title="Remove">&times;</button></td>';
     $('holdings-body').appendChild(tr);
 
@@ -72,10 +71,10 @@ HARP.ui.forms = (function () {
       var value = parseFloat(cleanNum(tr.querySelector('.h-value').value)) || 0;
       var ticker = tr.querySelector('.h-ticker').value.trim();
       if (value <= 0 && !ticker) return; // skip empty rows
-      var basis = tr.dataset.costBasis;
+      var basis = cleanNum(tr.querySelector('.h-basis').value);
       out.push({ ticker: ticker, name: ticker,
         sector: tr.querySelector('.h-sector').value, value: value,
-        costBasis: (basis == null || basis === '') ? '' : (parseFloat(basis) || 0) });
+        costBasis: basis === '' ? '' : (parseFloat(basis) || 0) });
     });
     return out;
   }
