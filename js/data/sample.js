@@ -20,12 +20,11 @@ HARP.sample = {
   taxDeferred: 600000,
   taxFree: 0,
 
-  // Primary goal: growth — judged on last-year return vs. the S&P. (The income fields below are populated
-  // too, so switching the goal to "Income" also demonstrates the income-vs-withdrawal shortfall check.)
+  // Primary goal: growth. (The income fields below are populated too, so switching the goal to "Income"
+  // demonstrates the income-vs-withdrawal shortfall check.) The return isn't compared to the market here
+  // because this portfolio isn't 100% stock (it has fixed income).
   goal: 'growth',
-  // Most recent full-year (2025) portfolio return — below the S&P 500's recent annualized (~23%), trails.
   yearReturnPct: 5,
-  dividendPct: 1.8,
   fixedIncomeValue: 150000,   // bonds, etc.; sums into the (now computed) total portfolio value
   fixedIncomeIncome: 6000,
   monthlyDrawdown: 5000,
@@ -39,12 +38,12 @@ HARP.sample = {
   liabilities: 600000,
 
   holdings: [
-    { ticker: 'AAPL', name: 'Apple Inc.',        sector: 'Technology',          value: 180000, costBasis: 60000 },
-    { ticker: 'MSFT', name: 'Microsoft Corp.',   sector: 'Technology',          value: 120000 },
-    { ticker: 'NVDA', name: 'NVIDIA Corp.',      sector: 'Technology',          value: 90000, costBasis: 20000 },
-    { ticker: 'VOO',  name: 'Vanguard S&P 500',  sector: 'Diversified / Fund',  value: 200000 },
-    { ticker: 'JPM',  name: 'JPMorgan Chase',    sector: 'Financials',          value: 60000 },
-    { ticker: 'XOM',  name: 'Exxon Mobil',       sector: 'Energy',              value: 40000 }
+    { ticker: 'AAPL', name: 'Apple Inc.',        sector: 'Technology',          value: 180000, costBasis: 60000, dividendYield: 0.5 },
+    { ticker: 'MSFT', name: 'Microsoft Corp.',   sector: 'Technology',          value: 120000,                    dividendYield: 0.8 },
+    { ticker: 'NVDA', name: 'NVIDIA Corp.',      sector: 'Technology',          value: 90000,  costBasis: 20000,  dividendYield: 0.03 },
+    { ticker: 'VOO',  name: 'Vanguard S&P 500',  sector: 'Diversified / Fund',  value: 200000,                    dividendYield: 1.3 },
+    { ticker: 'JPM',  name: 'JPMorgan Chase',    sector: 'Financials',          value: 60000,                     dividendYield: 2.4 },
+    { ticker: 'XOM',  name: 'Exxon Mobil',       sector: 'Energy',              value: 40000,                     dividendYield: 3.5 }
   ],
 
   insurance: {
