@@ -326,7 +326,7 @@ HARP.ui.forms = (function () {
     // end up typing in front of an existing "0" (e.g. "0" + "20000" reading as "020,000"). Delegated
     // so dynamically-added holding rows are covered. `armed` keeps the click's mouseup from collapsing
     // the programmatic selection back to a caret.
-    var NUMERIC_SEL = 'input.dollar, input[type="number"]';
+    var NUMERIC_SEL = 'input.dollar, input[type="number"], input[inputmode]';
     var armed = false;
     form.addEventListener('focusin', function (e) {
       var t = e.target;
