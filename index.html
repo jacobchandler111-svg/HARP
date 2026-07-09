@@ -46,10 +46,12 @@
               <ul class="dz-files"></ul>
             </div>
 
-            <h4 class="sub">Holdings</h4>
+            <div id="goal-input"><!-- primary goal (Growth / Income) injected by forms.js --></div>
+
+            <h4 class="sub">Stock holdings</h4>
             <table class="holdings" id="holdings">
               <thead>
-                <tr><th>Ticker</th><th>Sector</th><th class="num">Value ($)</th><th aria-label="Remove"></th></tr>
+                <tr><th>Ticker</th><th>Sector</th><th class="num">Market value ($)</th><th class="num">Cost basis ($)</th><th aria-label="Remove"></th></tr>
               </thead>
               <tbody id="holdings-body"><!-- rows injected by forms.js --></tbody>
             </table>
@@ -147,6 +149,7 @@
   <script src="js/engine/accounting.js"></script>
   <script src="js/engine/concentration.js"></script>
   <script src="js/engine/performance.js"></script>
+  <script src="js/engine/income.js"></script>
   <script src="js/engine/gains.js"></script>
   <script src="js/engine/insurance.js"></script>
   <script src="js/engine/tax.js"></script>
