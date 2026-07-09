@@ -27,11 +27,19 @@ HARP.insurance = (function () {
            (Number(profile.taxFree) || 0) + (Number(ins.homeValue) || 0);
   }
 
+  // Remaining working years: explicit if given, else derived from age (retire at cfg.retirementAge, ~65).
+  function yearsToRetirement(profile, cfg) {
+    var icfg = (cfg && cfg.insurance) || {};
+    var explicit = Number(profile.yearsToRetirement);
+    if (explicit > 0) return explicit;
+    var age = Number(profile.age);
+    if (age > 0) return Math.max(0, (Number(cfg && cfg.retirementAge) || 65) - age);
+    return Number(icfg.defaultYearsToRetirement) || 0;
+  }
   // Future income the household would lose: income x remaining working years (simple, undiscounted).
   function futureIncome(profile, cfg) {
-    var icfg = (cfg && cfg.insurance) || {};
     var income = Number(profile.income) || 0;
-    var years = Number(profile.yearsToRetirement) || Number(icfg.defaultYearsToRetirement) || 0;
+    var years = yearsToRetirement(profile, cfg);
     return income > 0 && years > 0 ? income * years : 0;
   }
 

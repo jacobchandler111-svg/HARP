@@ -41,6 +41,9 @@ HARP.config = {
   // — but being under-weighted in stocks is only critical for a growth goal (see allocation.js).
   allocation: { base: 110, moderateDeviation: 25, criticalDeviation: 50 },
 
+  // Assumed retirement age — used to derive remaining working years from the client's age (insurance).
+  retirementAge: 65,
+
   // Embedded / unrealized gains — needs a cost basis on the holding. A large low-basis position is
   // both an investment-concentration and an upcoming-tax-event concern (flagged in both domains).
   gains: {
