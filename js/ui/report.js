@@ -241,20 +241,24 @@ HARP.ui.report = (function () {
     return g;
   }
   function investmentRec(fs) {
-    var tickers = [], sectors = [], perf = false, gains = false;
+    var tickers = [], sectors = [], perf = false, gains = false, shortfall = false;
     fs.forEach(function (f) {
       if (f.category === 'Investment concentration') { var m = f.title.match(/^(\S+)/); if (m) tickers.push(m[1]); }
       else if (f.category === 'Sector exposure') { var s = f.title.match(/^(.+?) sector is/); if (s) sectors.push(s[1]); }
       else if (f.category === 'Investment performance') perf = true;
       else if (f.category === 'Unrealized gains') gains = true;
+      else if (f.category === 'Investment income') shortfall = true;
     });
     var bits = [];
     if (tickers.length) bits.push('trimming the concentrated positions (' + tickers.join(', ') + ')');
     if (sectors.length) bits.push('reducing your ' + naturalJoin(sectors) + ' concentration');
     if (gains) bits.push('managing the embedded gains tax-efficiently');
     if (perf) bits.push('pursuing a stronger risk-adjusted return relative to the market');
-    return 'Speak with one of our advisors to build a more diversified investment plan' +
-      (bits.length ? ' — ' + naturalJoin(bits) : '') + '.';
+    if (shortfall) bits.push('closing the gap between your portfolio income and your withdrawals');
+    var lead = (tickers.length || sectors.length) ? 'build a more diversified investment plan'
+             : shortfall ? 'strengthen your income plan'
+             : 'strengthen your investment plan';
+    return 'Speak with one of our advisors to ' + lead + (bits.length ? ' — ' + naturalJoin(bits) : '') + '.';
   }
   function taxRec(fs) {
     var standard = fs.some(function (f) { return /standard deduction/i.test(f.title); });
