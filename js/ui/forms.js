@@ -63,7 +63,7 @@ HARP.ui.forms = (function () {
       var found = HARP.sectors.lookup(tickerEl.value);
       if (found) sectorEl.value = found;
     });
-    tr.querySelector('.icon-btn').addEventListener('click', function () { tr.remove(); scheduleSave(); });
+    tr.querySelector('.icon-btn').addEventListener('click', function () { tr.remove(); updatePortfolioTotal(); scheduleSave(); });
   }
   function readHoldings() {
     var out = [];
@@ -83,11 +83,50 @@ HARP.ui.forms = (function () {
   function perfYear() { return new Date().getFullYear() - 1; }
   function buildPerformanceInputs() {
     $('performance-inputs').innerHTML =
-      '<label>Total portfolio value ($)' +
-        '<input type="text" inputmode="decimal" class="dollar" id="portfolioValue" placeholder="0" /></label>' +
-      '<label>' + perfYear() + ' portfolio performance' +
-        '<span class="pct-field"><input type="number" id="yearReturnPct" step="0.1" placeholder="e.g. 12.5" /><span class="pct-suffix">%</span></span></label>';
+      '<label>Amount invested in fixed income ($)' +
+        '<input type="text" inputmode="decimal" class="dollar" id="fixedIncomeValue" placeholder="0" /></label>' +
+      '<div class="computed-row"><span class="computed-label">Total portfolio value</span>' +
+        '<span class="computed-val" id="portfolioValueOut">$0</span></div>' +
+      // Growth goal: last full-year return vs the market.
+      '<div class="pi-fields" id="goal-growth-fields">' +
+        '<label>' + perfYear() + ' portfolio performance' +
+          '<span class="pct-field"><input type="number" id="yearReturnPct" step="0.1" placeholder="e.g. 12.5" /><span class="pct-suffix">%</span></span></label>' +
+      '</div>' +
+      // Income goal: dividends + fixed-income income vs the monthly withdrawal.
+      '<div class="pi-fields" id="goal-income-fields" hidden>' +
+        '<label>Portfolio dividend yield' +
+          '<span class="pct-field"><input type="number" id="dividendPct" step="0.1" placeholder="e.g. 2.0" /><span class="pct-suffix">%</span></span></label>' +
+        '<label>Annual income from fixed income ($)' +
+          '<input type="text" inputmode="decimal" class="dollar" id="fixedIncomeIncome" placeholder="0" /></label>' +
+        '<label>Monthly withdrawal from this account ($)' +
+          '<input type="text" inputmode="decimal" class="dollar" id="monthlyDrawdown" placeholder="0" /></label>' +
+      '</div>';
   }
+
+  // Primary goal drives which follow-up fields show: Growth -> last-year return; Income -> income vs draw.
+  function buildGoalInput() {
+    $('goal-input').innerHTML =
+      '<div class="q-row"><span class="q-label">What is the client’s primary goal?</span>' +
+      '<span class="yesno" role="radiogroup" aria-label="Primary goal">' +
+        '<input type="radio" name="goal" id="goal-growth" value="growth" checked>' +
+        '<label for="goal-growth">Growth</label>' +
+        '<input type="radio" name="goal" id="goal-income" value="income">' +
+        '<label for="goal-income">Income</label>' +
+      '</span></div>';
+  }
+  function goalVal() { var g = document.querySelector('input[name="goal"]:checked'); return g ? g.value : 'growth'; }
+  function setGoal(v) { var e = $((v === 'income') ? 'goal-income' : 'goal-growth'); if (e) e.checked = true; }
+  function syncGoalCascade() {
+    var income = goalVal() === 'income';
+    if ($('goal-growth-fields')) $('goal-growth-fields').hidden = income;
+    if ($('goal-income-fields')) $('goal-income-fields').hidden = !income;
+  }
+  // Total portfolio value = stock holdings' market values + fixed income (computed, read-only, live).
+  function portfolioTotal() {
+    var stocks = readHoldings().reduce(function (s, h) { return s + (Number(h.value) || 0); }, 0);
+    return stocks + num('fixedIncomeValue');
+  }
+  function updatePortfolioTotal() { var el = $('portfolioValueOut'); if (el) el.textContent = HARP.util.money(portfolioTotal()); }
 
   // ---------------------------------------------------------------- insurance
   function policyTypeOptions() {
@@ -255,6 +294,8 @@ HARP.ui.forms = (function () {
     if (!form) return;
     form.addEventListener('input', scheduleSave);
     form.addEventListener('change', scheduleSave);
+    form.addEventListener('input', updatePortfolioTotal);   // live total as holdings / fixed income change
+    form.addEventListener('change', function (e) { if (e.target && e.target.name === 'goal') syncGoalCascade(); });
     // Re-format dollar fields with commas when the user leaves the field.
     form.addEventListener('focusout', function (e) {
       if (e.target && e.target.classList && e.target.classList.contains('dollar')) e.target.value = commaFmt(e.target.value);
@@ -286,8 +327,13 @@ HARP.ui.forms = (function () {
       taxable: num('taxable'),
       taxDeferred: num('taxDeferred'),
       taxFree: num('taxFree'),
+      goal: goalVal(),
       yearReturnPct: numOrBlank('yearReturnPct'),
-      portfolioValue: num('portfolioValue'),
+      dividendPct: numOrBlank('dividendPct'),
+      fixedIncomeValue: num('fixedIncomeValue'),
+      fixedIncomeIncome: num('fixedIncomeIncome'),
+      monthlyDrawdown: num('monthlyDrawdown'),
+      portfolioValue: portfolioTotal(),
       holdings: readHoldings(),
       assets: num('assets'),
       liabilities: num('liabilities'),
@@ -300,8 +346,12 @@ HARP.ui.forms = (function () {
     setVal('name', p.name); setVal('filingStatus', p.filingStatus);
     setVal('income', p.income); setVal('agi', p.agi); setVal('totalTax', p.totalTax); setVal('dependents', p.dependents);
     setVal('taxable', p.taxable); setVal('taxDeferred', p.taxDeferred); setVal('taxFree', p.taxFree);
+    setGoal(p.goal);
     setVal('yearReturnPct', p.yearReturnPct);
-    setVal('portfolioValue', p.portfolioValue);
+    setVal('dividendPct', p.dividendPct);
+    setVal('fixedIncomeValue', p.fixedIncomeValue);
+    setVal('fixedIncomeIncome', p.fixedIncomeIncome);
+    setVal('monthlyDrawdown', p.monthlyDrawdown);
 
     $('holdings-body').innerHTML = '';
     (p.holdings || []).forEach(addHoldingRow);
@@ -312,6 +362,8 @@ HARP.ui.forms = (function () {
     loadInsurance(p.insurance);
     loadLegal(p.legal);
     formatDollarInputs();
+    syncGoalCascade();
+    updatePortfolioTotal();
     save();
   }
   function reset() {
@@ -319,17 +371,22 @@ HARP.ui.forms = (function () {
     // form's native reset() (the named-property gotcha), so form.reset() can resolve to an element.
     HTMLFormElement.prototype.reset.call($('harp-form'));
     $('holdings-body').innerHTML = ''; addHoldingRow();
+    syncGoalCascade();
+    updatePortfolioTotal();
     syncInsuranceCascade();
     syncLegalCascade();
     clearSaved();
   }
   function init() {
+    buildGoalInput();
     buildPerformanceInputs();
     buildInsuranceInputs();
     buildLegalChecklist();
     var saved = loadSaved();
     if (saved) loadProfile(saved); else addHoldingRow();
     wireAutosave();
+    syncGoalCascade();
+    updatePortfolioTotal();
   }
 
   return {

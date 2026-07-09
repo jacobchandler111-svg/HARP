@@ -179,6 +179,10 @@ button:hover { filter: brightness(0.97); }
 .h-basis { color: var(--muted); font-size: 13px; }
 /* Portfolio information: stack value over performance (one per line, full width). */
 #performance-inputs { grid-template-columns: 1fr; }
+.pi-fields { display: grid; gap: 12px; }
+.computed-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.computed-label { font-size: 13px; color: var(--ink); font-weight: 600; }
+.computed-val { font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--brand-ink); }
 
 /* report: HARP wordmark (right header), executive summary, recommendations */
 .op-harp { font-family: var(--font-display); font-size: 28px; font-weight: 600; color: var(--brand-ink); letter-spacing: 1.5px; line-height: 1; }
