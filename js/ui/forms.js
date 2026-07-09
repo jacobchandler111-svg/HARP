@@ -52,7 +52,7 @@ HARP.ui.forms = (function () {
       '<td><select class="h-sector">' + sectorOptions(h.sector) + '</select></td>' +
       '<td class="num"><input type="text" inputmode="decimal" class="h-value dollar" value="' + esc(commaFmt(h.value)) + '" placeholder="0" /></td>' +
       '<td class="num"><input type="text" inputmode="decimal" class="h-basis dollar" value="' + esc(commaFmt(h.costBasis)) + '" placeholder="0" /></td>' +
-      '<td class="num"><input type="number" class="h-divyield" step="0.1" min="0" value="' + esc(h.dividendYield == null ? '' : h.dividendYield) + '" placeholder="0" /></td>' +
+      '<td class="num"><span class="cell-pct"><input type="text" inputmode="decimal" class="h-divyield" value="' + esc(h.dividendYield == null ? '' : h.dividendYield) + '" placeholder="0" /><span class="cell-pct-suffix">%</span></span></td>' +
       '<td><button type="button" class="icon-btn" title="Remove">&times;</button></td>';
     $('holdings-body').appendChild(tr);
 
@@ -90,11 +90,13 @@ HARP.ui.forms = (function () {
         '<input type="text" inputmode="decimal" class="dollar" id="fixedIncomeValue" placeholder="0" /></label>' +
       // Reveals only when a fixed-income amount is entered.
       '<div class="pi-fields" id="fixed-income-income-field" hidden>' +
-        '<label>Annual income from fixed income ($)' +
+        '<label>Annual fixed income ($)' +
           '<input type="text" inputmode="decimal" class="dollar" id="fixedIncomeIncome" placeholder="0" /></label>' +
       '</div>' +
       '<div class="computed-row"><span class="computed-label">Total portfolio value</span>' +
         '<span class="computed-val" id="portfolioValueOut">$0</span></div>' +
+      '<div class="computed-row"><span class="computed-label">Total portfolio income (annual)</span>' +
+        '<span class="computed-val" id="portfolioIncomeOut">$0</span></div>' +
       // Growth goal: last full-year return (only compared to the market when 100% stock).
       '<div class="pi-fields" id="goal-growth-fields">' +
         '<label>' + perfYear() + ' portfolio performance' +
@@ -118,7 +120,7 @@ HARP.ui.forms = (function () {
         '<label for="goal-income">Income</label>' +
       '</span></div>' +
       '<div class="q-row"><span class="q-label">What is the client’s current age?</span>' +
-        '<input type="number" class="q-num" id="age" min="0" step="1" placeholder="0" /></div>';
+        '<input type="text" inputmode="numeric" class="q-num" id="age" placeholder="e.g. 45" /></div>';
   }
   function goalVal() { var g = document.querySelector('input[name="goal"]:checked'); return g ? g.value : 'growth'; }
   function setGoal(v) { var e = $((v === 'income') ? 'goal-income' : 'goal-growth'); if (e) e.checked = true; }
@@ -136,7 +138,17 @@ HARP.ui.forms = (function () {
     var stocks = readHoldings().reduce(function (s, h) { return s + (Number(h.value) || 0); }, 0);
     return stocks + num('fixedIncomeValue');
   }
-  function updatePortfolioTotal() { var el = $('portfolioValueOut'); if (el) el.textContent = HARP.util.money(portfolioTotal()); }
+  // Annual portfolio income = stock dividends (sum of value x per-holding yield%) + annual fixed income.
+  function portfolioIncome() {
+    var dividends = readHoldings().reduce(function (s, h) {
+      return s + (Number(h.value) || 0) * ((Number(h.dividendYield) || 0) / 100);
+    }, 0);
+    return dividends + num('fixedIncomeIncome');
+  }
+  function updatePortfolioTotal() {
+    var v = $('portfolioValueOut'); if (v) v.textContent = HARP.util.money(portfolioTotal());
+    var i = $('portfolioIncomeOut'); if (i) i.textContent = HARP.util.money(portfolioIncome());
+  }
 
   // ---------------------------------------------------------------- insurance
   function policyTypeOptions() {
@@ -347,7 +359,6 @@ HARP.ui.forms = (function () {
       holdings: readHoldings(),
       assets: num('assets'),
       liabilities: num('liabilities'),
-      yearsToRetirement: numOrBlank('yearsToRetirement'),
       insurance: readInsurance(),
       legal: readLegal()
     };
@@ -368,7 +379,6 @@ HARP.ui.forms = (function () {
     if (!(p.holdings || []).length) addHoldingRow();
 
     setVal('assets', p.assets); setVal('liabilities', p.liabilities);
-    setVal('yearsToRetirement', p.yearsToRetirement);
     loadInsurance(p.insurance);
     loadLegal(p.legal);
     formatDollarInputs();

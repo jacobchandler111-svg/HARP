@@ -30,8 +30,6 @@ HARP.sample = {
   fixedIncomeIncome: 6000,
   monthlyDrawdown: 5000,
 
-  // Years until retirement — drives the economic-value-of-future-income method.
-  yearsToRetirement: 20,
 
   // Household balance sheet. Assets > $5M with no asset-protection trust triggers the estate risk;
   // $600k liabilities against $250k face value is a "significantly underinsured" red flag.

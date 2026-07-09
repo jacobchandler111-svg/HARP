@@ -85,6 +85,9 @@ table.holdings th { font-family: var(--font-mono); text-align: center; font-weig
 table.holdings td.num { text-align: right; }
 table.holdings td { padding: 3px 6px; }
 table.holdings input, table.holdings select { width: 100%; }
+.cell-pct { display: flex; align-items: center; gap: 3px; }
+.cell-pct input { flex: 1; width: auto; min-width: 0; text-align: right; }
+.cell-pct-suffix { color: var(--muted); font-size: 11px; }
 
 /* ---- insurance policies ---- */
 .policy-add { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
