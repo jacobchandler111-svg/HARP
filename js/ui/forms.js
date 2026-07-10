@@ -159,18 +159,24 @@ HARP.ui.forms = (function () {
   function syncInsuranceCascade() {
     var f = $('ins-policies-followup');
     if (f) f.hidden = !nameBool('ins-hasPolicies');
+    var b = $('ins-business-followup');
+    if (b) b.hidden = !nameBool('ins-hasBusiness');
   }
   function buildInsuranceInputs() {
     $('insurance-inputs').innerHTML =
-      yesNoToggle('ins-hasPolicies', 'Do you have an insurance policy?') +
+      yesNoToggle('ins-hasPolicies', 'Do you have a personal / family insurance policy?') +
       '<div class="q-followup" id="ins-policies-followup" hidden>' +
-        '<label>Total payout (face value) across all policies ($)' +
+        '<label>Total payout value across all policies ($)' +
           '<input type="text" inputmode="decimal" class="dollar" id="ins-totalFaceValue" placeholder="0" /></label>' +
         '<div class="q-row q-sub"><span class="q-label">How many years ago was the policy issued or last reviewed?</span>' +
           '<input type="number" class="q-num" id="ins-policyAgeYears" min="0" step="1" placeholder="0" /></div>' +
+      '</div>' +
+      yesNoToggle('ins-hasBusiness', 'Do you own a business or entity?') +
+      '<div class="q-followup" id="ins-business-followup" hidden>' +
+        yesNoToggle('ins-hasUmbrella', 'Do you have an umbrella policy?') +
       '</div>';
     $('insurance-inputs').addEventListener('change', function (e) {
-      if (e.target && /^ins-hasPolicies-(yes|no)$/.test(e.target.id)) syncInsuranceCascade();
+      if (e.target && /^ins-(hasPolicies|hasBusiness)-(yes|no)$/.test(e.target.id)) syncInsuranceCascade();
     });
     syncInsuranceCascade();
   }
@@ -178,7 +184,9 @@ HARP.ui.forms = (function () {
     return {
       hasPolicies: nameBool('ins-hasPolicies'),
       totalFaceValue: num('ins-totalFaceValue'),
-      policyAgeYears: numOrBlank('ins-policyAgeYears')
+      policyAgeYears: numOrBlank('ins-policyAgeYears'),
+      hasBusiness: nameBool('ins-hasBusiness'),
+      hasUmbrella: nameBool('ins-hasUmbrella')
     };
   }
   function loadInsurance(ins) {
@@ -186,6 +194,8 @@ HARP.ui.forms = (function () {
     setNameBool('ins-hasPolicies', !!ins.hasPolicies);
     setVal('ins-totalFaceValue', ins.totalFaceValue);
     setVal('ins-policyAgeYears', ins.policyAgeYears);
+    setNameBool('ins-hasBusiness', !!ins.hasBusiness);
+    setNameBool('ins-hasUmbrella', !!ins.hasUmbrella);
     syncInsuranceCascade();
   }
 
