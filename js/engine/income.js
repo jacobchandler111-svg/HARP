@@ -29,16 +29,21 @@ HARP.income = (function () {
     var fixedPct = portfolio > 0 ? Math.round((fixedValue / portfolio) * 100) : null;
 
     var findings = [];
-    // Only income-goal households with a withdrawal need are judged on income vs. draw.
+    // Only income-goal households with a withdrawal need are judged on income vs. draw. A shortfall is a
+    // moderate concern up to criticalShortfallPct below the need, and a critical concern beyond that.
+    var critPct = Number((cfg.income || {}).criticalShortfallPct) || 25;
     if (goal === 'income' && annualDraw > 0) {
       if (net < 0) {
+        var shortfallPct = Math.round((-net / annualDraw) * 100);
+        var critical = shortfallPct > critPct;
         findings.push({
-          category: 'Investment income', severity: 'risk',
+          category: 'Investment income', severity: critical ? 'risk' : 'warn',
           title: 'Portfolio income falls short of withdrawals',
           detail: 'Estimated portfolio income of ' + m(annualIncome) + '/yr (dividends ' + m(stockDividends) +
             ' + fixed income ' + m(fixedIncomeIncome) + ') does not cover planned withdrawals of ' + m(annualDraw) +
-            '/yr — a shortfall of about ' + m(-net) + '/yr (' + m(monthlyDraw) + '/mo). This gap needs to be ' +
-            'addressed: drawing down principal, adjusting spending, or repositioning the portfolio for more income.'
+            '/yr — a shortfall of about ' + m(-net) + '/yr (' + m(monthlyDraw) + '/mo), ' + shortfallPct +
+            '% below the need. This gap needs to be addressed: drawing down principal, adjusting spending, or ' +
+            'repositioning the portfolio for more income.'
         });
       } else {
         findings.push({

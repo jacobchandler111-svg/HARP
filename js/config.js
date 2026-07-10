@@ -44,6 +44,9 @@ HARP.config = {
   // Assumed retirement age — used to derive remaining working years from the client's age (insurance).
   retirementAge: 65,
 
+  // Income goal: how far portfolio income can fall below the withdrawal need before it's critical.
+  income: { criticalShortfallPct: 25 },
+
   // Embedded / unrealized gains — assessed cumulatively across the portfolio (gains and losses net).
   // A holding counts as "large" when its gain is over embeddedGainPct of cost AND at least minGainAmount;
   // one consolidated flag is raised when a large gain exists and the net embedded gain is positive.
