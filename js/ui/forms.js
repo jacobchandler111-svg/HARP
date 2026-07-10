@@ -45,7 +45,9 @@ HARP.ui.forms = (function () {
   }
   function accountTypeOptions(selected) {
     var s = selected || 'taxable';
-    return [['taxable', 'Taxable'], ['traditional', 'Traditional'], ['roth', 'Roth']].map(function (t) {
+    // Value = tax treatment (kept stable for the engine + saved profiles); label = account name a reader
+    // would extract. 'Individual' is a taxable brokerage account.
+    return [['taxable', 'Individual'], ['traditional', 'Traditional'], ['roth', 'Roth']].map(function (t) {
       return '<option value="' + t[0] + '"' + (t[0] === s ? ' selected' : '') + '>' + t[1] + '</option>';
     }).join('');
   }
