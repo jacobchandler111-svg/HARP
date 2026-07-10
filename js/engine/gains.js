@@ -22,6 +22,7 @@ HARP.gains = (function () {
 
     var netGain = 0, large = [];
     holdings.forEach(function (h) {
+      if ((h.accountType || 'taxable') !== 'taxable') return; // gains only trigger tax in a taxable account
       var value = Number(h.value) || 0;
       var basis = Number(h.costBasis);
       if (isNaN(basis) || basis <= 0) return;                // no cost basis -> can't assess this holding

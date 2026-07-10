@@ -43,13 +43,20 @@ HARP.ui.forms = (function () {
       return '<option value="' + esc(s) + '"' + (s === selected ? ' selected' : '') + '>' + esc(s) + '</option>';
     }).join('');
   }
+  function accountTypeOptions(selected) {
+    var s = selected || 'taxable';
+    return [['taxable', 'Taxable'], ['traditional', 'Traditional'], ['roth', 'Roth']].map(function (t) {
+      return '<option value="' + t[0] + '"' + (t[0] === s ? ' selected' : '') + '>' + t[1] + '</option>';
+    }).join('');
+  }
   function addHoldingRow(h) {
-    h = h || { ticker: '', name: '', sector: '', value: '', costBasis: '', dividendYield: '' };
+    h = h || { ticker: '', name: '', sector: '', value: '', costBasis: '', dividendYield: '', accountType: 'taxable' };
     var tr = document.createElement('tr');
-    // Cost basis is optional (feeds the embedded-gain check). Dividend yield backs into stock income.
+    // Account type drives tax treatment: cost basis / embedded gains only matter in a taxable account.
     tr.innerHTML =
       '<td><input type="text" class="h-ticker" value="' + esc(h.ticker) + '" placeholder="AAPL" /></td>' +
       '<td><select class="h-sector">' + sectorOptions(h.sector) + '</select></td>' +
+      '<td><select class="h-account">' + accountTypeOptions(h.accountType) + '</select></td>' +
       '<td class="num"><input type="text" inputmode="decimal" class="h-value dollar" value="' + esc(commaFmt(h.value)) + '" placeholder="0" /></td>' +
       '<td class="num"><input type="text" inputmode="decimal" class="h-basis dollar" value="' + esc(commaFmt(h.costBasis)) + '" placeholder="0" /></td>' +
       '<td class="num"><span class="cell-pct"><input type="text" inputmode="decimal" class="h-divyield" value="' + esc(h.dividendYield == null ? '' : h.dividendYield) + '" placeholder="0" /><span class="cell-pct-suffix">%</span></span></td>' +
@@ -77,7 +84,8 @@ HARP.ui.forms = (function () {
       out.push({ ticker: ticker, name: ticker,
         sector: tr.querySelector('.h-sector').value, value: value,
         costBasis: basis === '' ? '' : (parseFloat(basis) || 0),
-        dividendYield: (divy === '' || divy == null || isNaN(Number(divy))) ? '' : Number(divy) });
+        dividendYield: (divy === '' || divy == null || isNaN(Number(divy))) ? '' : Number(divy),
+        accountType: (tr.querySelector('.h-account') || {}).value || 'taxable' });
     });
     return out;
   }
@@ -92,6 +100,8 @@ HARP.ui.forms = (function () {
       '<div class="pi-fields" id="fixed-income-income-field" hidden>' +
         '<label>Annual fixed income ($)' +
           '<input type="text" inputmode="decimal" class="dollar" id="fixedIncomeIncome" placeholder="0" /></label>' +
+        '<label>Fixed income account type' +
+          '<select id="fixedIncomeAccount">' + accountTypeOptions('taxable') + '</select></label>' +
       '</div>' +
       '<div class="computed-row"><span class="computed-label">Total portfolio value</span>' +
         '<span class="computed-val" id="portfolioValueOut">$0</span></div>' +
@@ -346,6 +356,13 @@ HARP.ui.forms = (function () {
   }
 
   // ---------------------------------------------------------------- profile
+  // Tax-treatment buckets, derived from the holdings' account types + the fixed-income account. (Maps the
+  // UI's 'traditional'/'roth' to the engine's tax-deferred/tax-free buckets.)
+  function taxBucket(type) {
+    var v = readHoldings().reduce(function (s, h) { return s + (h.accountType === type ? (Number(h.value) || 0) : 0); }, 0);
+    if (val('fixedIncomeAccount') === type) v += num('fixedIncomeValue');
+    return v;
+  }
   function readProfile() {
     return {
       name: val('name'),
@@ -354,9 +371,9 @@ HARP.ui.forms = (function () {
       agi: num('agi'),
       totalTax: num('totalTax'),
       dependents: int('dependents'),
-      taxable: num('taxable'),
-      taxDeferred: num('taxDeferred'),
-      taxFree: num('taxFree'),
+      taxable: taxBucket('taxable'),
+      taxDeferred: taxBucket('traditional'),
+      taxFree: taxBucket('roth'),
       goal: goalVal(),
       age: numOrBlank('age'),
       yearReturnPct: numOrBlank('yearReturnPct'),
@@ -374,7 +391,7 @@ HARP.ui.forms = (function () {
   function loadProfile(p) {
     setVal('name', p.name); setVal('filingStatus', p.filingStatus);
     setVal('income', p.income); setVal('agi', p.agi); setVal('totalTax', p.totalTax); setVal('dependents', p.dependents);
-    setVal('taxable', p.taxable); setVal('taxDeferred', p.taxDeferred); setVal('taxFree', p.taxFree);
+    setVal('fixedIncomeAccount', p.fixedIncomeAccount || 'taxable');
     setGoal(p.goal);
     setVal('age', p.age);
     setVal('yearReturnPct', p.yearReturnPct);
