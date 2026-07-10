@@ -97,15 +97,14 @@ HARP.ui.forms = (function () {
         '<span class="computed-val" id="portfolioValueOut">$0</span></div>' +
       '<div class="computed-row"><span class="computed-label">Total portfolio income (annual)</span>' +
         '<span class="computed-val" id="portfolioIncomeOut">$0</span></div>' +
-      // Growth goal: last full-year return (only compared to the market when 100% stock).
+      // Monthly withdrawal applies to EITHER goal — a growth household may still draw from the account,
+      // and income vs. that draw is assessed the same way for both.
+      '<label>Monthly needs / withdrawals from account ($)' +
+        '<input type="text" inputmode="decimal" class="dollar" id="monthlyDrawdown" placeholder="0" /></label>' +
+      // Growth goal only: last full-year return vs. the stock-weighted market.
       '<div class="pi-fields" id="goal-growth-fields">' +
         '<label>' + perfYear() + ' portfolio performance' +
           '<span class="pct-field"><input type="number" id="yearReturnPct" step="0.1" placeholder="e.g. 12.5" /><span class="pct-suffix">%</span></span></label>' +
-      '</div>' +
-      // Income goal: stock income is backed into from the per-holding dividend yields + fixed income.
-      '<div class="pi-fields" id="goal-income-fields" hidden>' +
-        '<label>Monthly needs / withdrawals from account ($)' +
-          '<input type="text" inputmode="decimal" class="dollar" id="monthlyDrawdown" placeholder="0" /></label>' +
       '</div>';
   }
 
@@ -125,9 +124,8 @@ HARP.ui.forms = (function () {
   function goalVal() { var g = document.querySelector('input[name="goal"]:checked'); return g ? g.value : 'growth'; }
   function setGoal(v) { var e = $((v === 'income') ? 'goal-income' : 'goal-growth'); if (e) e.checked = true; }
   function syncGoalCascade() {
-    var income = goalVal() === 'income';
-    if ($('goal-growth-fields')) $('goal-growth-fields').hidden = income;
-    if ($('goal-income-fields')) $('goal-income-fields').hidden = !income;
+    // Only the growth return field is goal-gated now; the withdrawal field shows for either goal.
+    if ($('goal-growth-fields')) $('goal-growth-fields').hidden = goalVal() !== 'growth';
   }
   // "Annual income from fixed income" only shows once a fixed-income amount is entered.
   function syncFixedIncomeCascade() {

@@ -181,15 +181,12 @@ HARP.ui.report = (function () {
       return '<p>' + esc('No critical issues stand out across the completed sections.' + missTail) + '</p>';
     }
 
-    var GROUPS = [
-      { label: 'investment and tax planning', keys: ['investments', 'tax'] },
-      { label: 'legal and insurance coverage', keys: ['legal', 'insurance'] }
-    ];
-    var hit = GROUPS.filter(function (g) {
-      return crit.some(function (f) { return g.keys.indexOf(catKeyOfFinding(f)) >= 0; });
-    }).map(function (g) { return g.label; });
+    // Name only the categories that actually carry a critical — green/healthy sections are excluded.
+    var critKeys = {};
+    crit.forEach(function (f) { var k = catKeyOfFinding(f); if (k) critKeys[k] = true; });
+    var concerning = cats.filter(function (c) { return critKeys[c.key]; }).map(function (c) { return c.label.toLowerCase(); });
 
-    // One representative critical issue per category (display order), up to 3.
+    // One representative critical issue per concerning category (display order), up to 3.
     var issues = [];
     ['investments', 'tax', 'legal', 'insurance'].forEach(function (k) {
       if (issues.length >= 3) return;
@@ -197,8 +194,7 @@ HARP.ui.report = (function () {
       if (f) issues.push(shortIssue(f.title));
     });
 
-    var s1 = 'There is significant risk ' +
-      (hit.length > 1 ? 'across your ' + hit.join(' and your ') : 'in your ' + (hit[0] || 'completed sections')) + '.';
+    var s1 = 'There is significant risk in your ' + (concerning.length ? naturalJoin(concerning) : 'completed sections') + '.';
     var s2 = ' Key issues include ' + naturalJoin(issues) + (crit.length > issues.length ? ', among others.' : '.');
     return '<p>' + esc(s1 + s2 + missTail) + '</p>';
   }

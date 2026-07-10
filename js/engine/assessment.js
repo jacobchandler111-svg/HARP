@@ -7,7 +7,7 @@ HARP.assessment = (function () {
   var CATEGORIES = [
     { key: 'investments', label: 'Investments', match: ['Investment concentration', 'Sector exposure', 'Asset allocation', 'Investment performance', 'Investment income', 'Unrealized gains'] },
     { key: 'insurance',   label: 'Insurance',   match: ['Insurance'] },
-    { key: 'tax',         label: 'Tax',         match: ['Tax diversification', 'Accounting / tax'] },
+    { key: 'tax',         label: 'Tax',         match: ['Tax diversification', 'Accounting / tax', 'Unrealized gains'] },
     { key: 'legal',       label: 'Legal',       match: ['Legal / estate'] }
   ];
 

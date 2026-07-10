@@ -50,25 +50,37 @@ HARP.legal = (function () {
     var missing = [];
     var items = [];
 
-    // ---- Will (+ review recency) ----
+    // ---- Will ----
     var hasWill = !!have.will;
     items.push({ key: 'will', label: 'Will', has: hasWill });
+    var willSev = null;
     if (!hasWill) {
       missing.push('Will');
       findings.push({ category: 'Legal / estate', severity: 'risk', title: 'Missing: Will',
         detail: 'A core estate-planning document is not in place. This is a common, high-impact gap.' });
     } else {
-      var willSev = reviewSeverity(have.willReviewedYears, cfg);
-      if (willSev) findings.push(reviewFinding('Will', have.willReviewedYears, willSev));
+      willSev = reviewSeverity(have.willReviewedYears, cfg);
     }
 
-    // ---- Trust (+ types + review recency) ----
+    // ---- Trust (+ types) ----
     var hasTrust = !!have.trust;
     var trustTypes = (have.trustTypes || []).slice();
     items.push({ key: 'trust', label: 'Trust', has: hasTrust, types: trustTypes });
-    if (hasTrust) {
-      var trustSev = reviewSeverity(have.trustReviewedYears, cfg);
-      if (trustSev) findings.push(reviewFinding('Trust(s)', have.trustReviewedYears, trustSev));
+    var trustSev = hasTrust ? reviewSeverity(have.trustReviewedYears, cfg) : null;
+
+    // ---- Review recency: one consolidated line when BOTH will and trust are stale ----
+    if (willSev && trustSev) {
+      var bothRisk = willSev === 'risk' && trustSev === 'risk';
+      findings.push({ category: 'Legal / estate',
+        severity: (willSev === 'risk' || trustSev === 'risk') ? 'risk' : 'warn',
+        title: 'Will and trust are both ' + (bothRisk ? 'significantly out of date' : 'out of date'),
+        detail: 'The will (~' + Math.round(Number(have.willReviewedYears)) + ' yrs) and trust (~' +
+          Math.round(Number(have.trustReviewedYears)) + ' yrs) were both last reviewed some time ago. Estate ' +
+          'documents should be revisited every few years and after major life events — review both.' });
+    } else if (willSev) {
+      findings.push(reviewFinding('Will', have.willReviewedYears, willSev));
+    } else if (trustSev) {
+      findings.push(reviewFinding('Trust(s)', have.trustReviewedYears, trustSev));
     }
 
     // ---- High-net-worth asset protection ----

@@ -50,8 +50,8 @@ HARP.insurance = (function () {
     return {
       category: 'Insurance',
       severity: sig ? 'risk' : 'warn',
-      title: (sig ? 'Significantly underinsured' : 'Underinsured') + ' vs ' + label,
-      detail: 'Total face value of ' + m(payout) + ' covers only ' + Math.round(ratio * 100) + '% of ' + label +
+      title: m(need - payout) + ' of ' + label + ' not covered by insurance',
+      detail: 'Total payout value of ' + m(payout) + ' covers only ' + Math.round(ratio * 100) + '% of ' + label +
         ' (about ' + m(need) + ') — a shortfall of about ' + m(need - payout) + '. ' + (sig
           ? 'A serious gap; increasing coverage should be a priority.'
           : 'Consider increasing coverage to close the gap.')
@@ -112,7 +112,8 @@ HARP.insurance = (function () {
     if (ageYears != null && ageYears >= ageMod) {
       var aged = ageYears >= ageCrit;
       findings.push({ category: 'Insurance', severity: aged ? 'risk' : 'warn',
-        title: aged ? 'Policy is significantly out of date' : 'Policy may be out of date',
+        title: aged ? 'Insurance policy is significantly out of date (~' + ageYears + ' yrs)'
+                    : 'Insurance policy hasn’t been reviewed in ~' + ageYears + ' years',
         detail: 'The policy was issued or last reviewed about ' + ageYears + ' years ago. ' + (aged
           ? 'Coverage this old often no longer matches needs, beneficiaries, or pricing — review as a priority.'
           : 'Worth reviewing to confirm coverage and pricing are still appropriate.') });

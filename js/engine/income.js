@@ -29,10 +29,11 @@ HARP.income = (function () {
     var fixedPct = portfolio > 0 ? Math.round((fixedValue / portfolio) * 100) : null;
 
     var findings = [];
-    // Only income-goal households with a withdrawal need are judged on income vs. draw. A shortfall is a
-    // moderate concern up to criticalShortfallPct below the need, and a critical concern beyond that.
+    // Any household with a withdrawal need is judged on income vs. draw — a growth household may still
+    // draw from the account. A shortfall is a moderate concern up to criticalShortfallPct below the need,
+    // and a critical concern beyond that.
     var critPct = Number((cfg.income || {}).criticalShortfallPct) || 25;
-    if (goal === 'income' && annualDraw > 0) {
+    if (annualDraw > 0) {
       if (net < 0) {
         var shortfallPct = Math.round((-net / annualDraw) * 100);
         var critical = shortfallPct > critPct;
