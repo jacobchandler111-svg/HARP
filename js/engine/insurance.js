@@ -83,6 +83,16 @@ HARP.insurance = (function () {
 
     var findings = [];
 
+    // Business/entity owner without an umbrella liability policy — a moderate gap. Assessed regardless of
+    // whether a personal policy is on record (so it still shows for a no-coverage household).
+    if (ins.hasBusiness && !ins.hasUmbrella) {
+      findings.push({ category: 'Insurance', severity: 'warn',
+        title: 'Business owner without an umbrella policy',
+        detail: 'The household owns a business or entity but has no umbrella liability policy. Umbrella ' +
+          'coverage protects personal and business assets from liability claims that exceed standard policy ' +
+          'limits — worth putting in place.' });
+    }
+
     // No policy on record => the rubric scores this `none` (15) directly, regardless of finding counts.
     if (!hasPolicies) {
       findings.push({ category: 'Insurance', severity: 'risk', title: 'No insurance coverage on record',
