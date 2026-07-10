@@ -15,10 +15,7 @@ HARP.sample = {
   totalTax: 24000,
   dependents: 2,
 
-  // Account balances by tax treatment
-  taxable: 400000,
-  taxDeferred: 600000,
-  taxFree: 0,
+  // Tax-treatment buckets are now derived from each holding's account type (+ the fixed-income account).
 
   // Primary goal: growth. (The income fields below are populated too, so switching the goal to "Income"
   // demonstrates the income-vs-withdrawal shortfall check.) The return isn't compared to the market here
@@ -27,6 +24,7 @@ HARP.sample = {
   age: 45,                    // ~65% stock guideline (110 - 45); 82% actual is within tolerance
   yearReturnPct: 5,
   fixedIncomeValue: 150000,   // bonds, etc.; sums into the (now computed) total portfolio value
+  fixedIncomeAccount: 'traditional',   // held in a tax-deferred account
   fixedIncomeIncome: 6000,
   monthlyDrawdown: 5000,
 
@@ -37,11 +35,11 @@ HARP.sample = {
   liabilities: 600000,
 
   holdings: [
-    { ticker: 'AAPL', name: 'Apple Inc.',        sector: 'Technology',          value: 180000, costBasis: 60000, dividendYield: 0.5 },
-    { ticker: 'MSFT', name: 'Microsoft Corp.',   sector: 'Technology',          value: 120000,                    dividendYield: 0.8 },
-    { ticker: 'NVDA', name: 'NVIDIA Corp.',      sector: 'Technology',          value: 90000,  costBasis: 20000,  dividendYield: 0.03 },
-    { ticker: 'VOO',  name: 'Vanguard S&P 500',  sector: 'Diversified / Fund',  value: 200000,                    dividendYield: 1.3 },
-    { ticker: 'JPM',  name: 'JPMorgan Chase',    sector: 'Financials',          value: 60000,                     dividendYield: 2.4 },
+    { ticker: 'AAPL', name: 'Apple Inc.',        sector: 'Technology',          value: 180000, costBasis: 60000, dividendYield: 0.5,  accountType: 'taxable' },
+    { ticker: 'MSFT', name: 'Microsoft Corp.',   sector: 'Technology',          value: 120000,                    dividendYield: 0.8,  accountType: 'taxable' },
+    { ticker: 'NVDA', name: 'NVIDIA Corp.',      sector: 'Technology',          value: 90000,  costBasis: 20000,  dividendYield: 0.03, accountType: 'taxable' },
+    { ticker: 'VOO',  name: 'Vanguard S&P 500',  sector: 'Diversified / Fund',  value: 200000,                    dividendYield: 1.3,  accountType: 'traditional' },
+    { ticker: 'JPM',  name: 'JPMorgan Chase',    sector: 'Financials',          value: 60000,                     dividendYield: 2.4,  accountType: 'roth' },
     { ticker: 'XOM',  name: 'Exxon Mobil',       sector: 'Energy',              value: 40000,                     dividendYield: 3.5 }
   ],
 
