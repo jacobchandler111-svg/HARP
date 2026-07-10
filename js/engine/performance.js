@@ -41,27 +41,37 @@ HARP.performance = (function () {
       findings: findings
     };
     if (!provided) return result;
-    // Only compare to the market for a growth-goal, 100%-stock portfolio: a mix with fixed income is
-    // reasonably aiming for less, so the comparison isn't apt. And even when it applies, a shortfall is
-    // context (info), not a scored ding — beating the market isn't everyone's goal.
-    var fixedValue = Number(profile.fixedIncomeValue) || 0;
-    if (profile.goal !== 'growth' || fixedValue > 0) return result;
+    // Only judged for a growth goal (income households are handled by the income module).
+    if (profile.goal !== 'growth') return result;
 
-    var gap = clientReturn - benchmark;
+    // Weight the benchmark by the stock allocation: the equity sleeve is expected to track the S&P and
+    // fixed income contributes ~0, so a 70%-stock portfolio is compared to 70% of the S&P's ~10% (= 7%).
+    var fixedValue = Number(profile.fixedIncomeValue) || 0;
+    var stockValue = (profile.holdings || []).reduce(function (s, h) { return s + (Number(h.value) || 0); }, 0);
+    var portfolio = stockValue + fixedValue;
+    if (portfolio <= 0 || stockValue <= 0) return result;   // no equity sleeve to judge
+    var stockPct = (stockValue / portfolio) * 100;
+    var weighted = (stockPct / 100) * benchmark;
+    result.stockPct = Math.round(stockPct);
+    result.weightedBenchmarkPct = weighted;
+
+    var gap = clientReturn - weighted;
     result.gapPct = gap;
+    var mix = Math.round(stockPct) + '% in stocks × the ' + benchmarkName + '’s ~' + pct(benchmark);
 
     if (gap < -tolerance) {
       result.status = 'underperform';
-      findings.push({ category: 'Investment performance', severity: 'info',
-        title: periodLabel + ' return trailed the ' + benchmarkName,
-        detail: 'The ' + periodLabel + ' return of ' + pct(clientReturn) + ' was below the ' + benchmarkName +
-          '’s long-run average of about ' + pct(benchmark) + '. Shown for context — for a growth-oriented, ' +
-          'all-stock portfolio there may be room to do better.' });
+      findings.push({ category: 'Investment performance', severity: 'warn',
+        title: 'Trailing the ' + benchmarkName,
+        detail: 'The ' + periodLabel + ' return of ' + pct(clientReturn) + ' trailed the stock-weighted benchmark of ' +
+          pct(weighted) + ' (' + mix + ') by ' + pct(-gap) + '. With a growth goal, the equity sleeve has room to ' +
+          'work harder — our advisors can help.' });
     } else {
       result.status = 'meets';
       findings.push({ category: 'Investment performance', severity: 'ok',
         title: periodLabel + ' return kept pace with the market',
-        detail: 'At or above the ' + benchmarkName + '’s long-run average of about ' + pct(benchmark) + '.' });
+        detail: 'The ' + periodLabel + ' return of ' + pct(clientReturn) + ' met or beat the stock-weighted benchmark of ' +
+          pct(weighted) + ' (' + mix + ') by ' + pct(gap) + '.' });
     }
 
     return result;
