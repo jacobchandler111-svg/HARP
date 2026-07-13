@@ -67,6 +67,11 @@ h4.sub:first-child { margin-top: 0; }
 .dz-note { margin: 0; font-size: 12px; color: var(--muted); }
 .dz-files { list-style: none; margin: 8px 0 0; padding: 0; text-align: left; font-size: 13px; }
 .dz-files li { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; background: #fff; border: 1px solid var(--line); border-radius: 6px; margin-top: 4px; }
+/* Nitrogen ingest result line (populated by js/ui/ingest.js). */
+.dz-status { margin: 8px 0 0; font-size: 12.5px; line-height: 1.4; text-align: left; color: var(--muted); }
+.dz-status[data-kind="ok"] { color: var(--ok); }
+.dz-status[data-kind="warn"] { color: var(--warn); }
+.dz-status[data-kind="busy"] { color: var(--brand); }
 
 /* ---- form fields ---- */
 .hint { color: var(--muted); font-size: 13px; margin: 0 0 10px; }

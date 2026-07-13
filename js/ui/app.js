@@ -21,6 +21,7 @@
   function resetAll() {
     HARP.ui.forms.reset();
     HARP.ui.uploads.clear();
+    HARP.ui.ingest.clear();
     state.assessment = null;
     $('report').innerHTML = '';
     showScreen('input');
@@ -42,6 +43,7 @@
     HARP.ui.forms.init();
     HARP.ui.accordion.init();
     HARP.ui.uploads.init();
+    HARP.ui.ingest.init();
 
     $('add-holding').addEventListener('click', function () { HARP.ui.forms.addHoldingRow(); });
 

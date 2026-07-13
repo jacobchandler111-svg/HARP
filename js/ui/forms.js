@@ -127,11 +127,11 @@ HARP.ui.forms = (function () {
   function buildRiskInputs() {
     $('risk-inputs').innerHTML =
       '<h4 class="sub">Risk profile (Nitrogen / Riskalyze)</h4>' +
-      '<div class="dropzone" data-upload="nitrogen">' +
-        '<input type="file" class="dz-input" accept=".pdf,.png,.jpg,.jpeg" hidden />' +
+      '<div class="dropzone" data-ingest="nitrogen">' +
+        '<input type="file" class="dz-input" accept=".pdf,.csv,.tsv,.xlsx,.xls" hidden />' +
         '<p class="dz-text">Drag &amp; drop the Nitrogen / Riskalyze report here, or ' +
           '<button type="button" class="link-btn dz-browse">browse</button></p>' +
-        '<p class="dz-note">Automatic extraction of the Risk Numbers arrives next — for now, enter the values manually below.</p>' +
+        '<p class="dz-note">PDF, Excel, or CSV — read on your device to fill the Risk Numbers below, which you can then verify. Or enter them manually.</p>' +
         '<ul class="dz-files"></ul>' +
       '</div>' +
       '<div class="grid">' +
@@ -180,6 +180,23 @@ HARP.ui.forms = (function () {
     setVal('risk-rangeHighPct', risk.rangeHighPct);
     setVal('risk-rangeLowAmt', risk.rangeLowAmt);
     setVal('risk-rangeHighAmt', risk.rangeHighAmt);
+  }
+  // Fill ONLY the risk fields present in `found` (from the Nitrogen ingest), leaving anything already
+  // entered untouched, then reformat dollars and persist. Keys match the profile.risk shape.
+  var RISK_FIELD_IDS = {
+    toleranceNumber: 'risk-tolerance', portfolioNumber: 'risk-portfolio', timeHorizonYears: 'risk-horizon',
+    gpa: 'risk-gpa', rangeLowPct: 'risk-rangeLowPct', rangeHighPct: 'risk-rangeHighPct',
+    rangeLowAmt: 'risk-rangeLowAmt', rangeHighAmt: 'risk-rangeHighAmt'
+  };
+  function fillRisk(found) {
+    found = found || {};
+    Object.keys(RISK_FIELD_IDS).forEach(function (k) {
+      if (found[k] == null || found[k] === '') return;
+      setVal(RISK_FIELD_IDS[k], found[k]);
+    });
+    formatDollarInputs();
+    updatePortfolioTotal();
+    save();
   }
 
   // Primary goal drives which follow-up fields show: Growth -> last-year return; Income -> income vs draw.
@@ -506,6 +523,6 @@ HARP.ui.forms = (function () {
 
   return {
     init: init, readProfile: readProfile, loadProfile: loadProfile, reset: reset,
-    addHoldingRow: addHoldingRow
+    addHoldingRow: addHoldingRow, fillRisk: fillRisk
   };
 })();

@@ -44,6 +44,20 @@ bundled map. This is intentional: it is the **seam** where a live data source wo
 introduce a backend or external API, only this module changes — the engine and UI stay the same
 because they only call `HARP.sectors.lookup(ticker)`.
 
+## 3a. Document ingest — client-side, not a cloud backend
+
+The Nitrogen / Riskalyze report ingest is done **entirely in the browser**, not via the cloud
+Gemini/OCR backend an earlier plan assumed. A dropped PDF, Excel, or CSV is read on the device and
+parsed with **vendored libraries** (`js/vendor/`: SheetJS for `.xlsx`, pdf.js for `.pdf`), which are
+**lazy-loaded only when a matching file is dropped**. This keeps HARP's privacy-by-architecture stance
+intact — **the client document never leaves the machine** — and avoids a backend and API keys.
+
+The seam that isolates format quirks is `js/engine/nitrogen.js` (pure): it turns extracted text/rows
+into a `profile.risk` object using heuristic label patterns. When a real export doesn't parse, that
+one module is where the patterns get tuned; the readers (`js/ui/ingest.js`) and the rest of the app do
+not change. Extraction failures degrade gracefully to manual entry — the fields are always editable,
+and the advisor verifies the auto-filled values before generating the report.
+
 ## 4. Code organization
 
 ```

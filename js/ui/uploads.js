@@ -10,6 +10,7 @@ HARP.ui.uploads = (function () {
   function init(root) {
     root = root || document;
     root.querySelectorAll('.dropzone').forEach(function (dz) {
+      if (dz.dataset.ingest) return; // Nitrogen dropzone is owned by HARP.ui.ingest (it parses, not stages)
       var key = dz.dataset.upload;
       staged[key] = staged[key] || [];
       var input = dz.querySelector('.dz-input');
