@@ -70,7 +70,7 @@ HARP.ui.ingest = (function () {
     var h = HARP.nitrogen.fromHandoff(obj);
     var nH = (h.holdings || []).length;
     if (nH) HARP.ui.forms.fillHoldings(h.holdings);
-    HARP.ui.forms.fillRisk(h.risk);
+    HARP.ui.forms.fillRisk(h.risk, { replace: true });   // handoff is authoritative — clears stale numbers between clients
     if (h.tax) HARP.ui.forms.fillTax(h.tax);   // ingest-driven tax (from the Nitrogen snapshot)
     var riskGot = Object.keys(FIELD_LABELS)
       .filter(function (k) { return h.risk[k] != null && h.risk[k] !== ''; })

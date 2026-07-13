@@ -134,7 +134,8 @@ HARP.nitrogen = (function () {
     var range = pf.range_6mo_pct || {};
     var risk = {
       portfolioNumber: pf.risk_number != null ? Number(pf.risk_number) : '',
-      // tolerance (client Risk Number) isn't in the handoff yet; left blank for manual entry.
+      // tolerance (client Risk Number) comes from the intake questionnaire (run_intake merges it in);
+      // blank when the client has no questionnaire yet, which authoritatively clears the field on ingest.
       toleranceNumber: pf.risk_tolerance_number != null ? Number(pf.risk_tolerance_number) : '',
       rangeLowPct: range.low != null ? Number(range.low) : '',
       rangeHighPct: range.high != null ? Number(range.high) : '',

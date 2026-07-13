@@ -181,18 +181,29 @@ HARP.ui.forms = (function () {
     setVal('risk-rangeLowAmt', risk.rangeLowAmt);
     setVal('risk-rangeHighAmt', risk.rangeHighAmt);
   }
-  // Fill ONLY the risk fields present in `found` (from the Nitrogen ingest), leaving anything already
-  // entered untouched, then reformat dollars and persist. Keys match the profile.risk shape.
+  // Keys match the profile.risk shape.
   var RISK_FIELD_IDS = {
     toleranceNumber: 'risk-tolerance', portfolioNumber: 'risk-portfolio', timeHorizonYears: 'risk-horizon',
     gpa: 'risk-gpa', rangeLowPct: 'risk-rangeLowPct', rangeHighPct: 'risk-rangeHighPct',
     rangeLowAmt: 'risk-rangeLowAmt', rangeHighAmt: 'risk-rangeHighAmt'
   };
-  function fillRisk(found) {
+  // Two modes, because two sources disagree on what a blank means:
+  //  • replace=true (a Nitrogen handoff, authoritative): set every field the source OWNS — i.e. every
+  //    key it carries (hasOwnProperty) — clearing to blank when the value is absent. So an import-only
+  //    client with no risk tolerance blanks the tolerance field instead of inheriting the previously
+  //    ingested client's number. Keys the handoff doesn't carry (e.g. a hand-typed horizon) are left be.
+  //  • replace=false (a fuzzy PDF/text extract, best-effort): fill only what was found; blank = "didn't
+  //    find it," so leave anything already entered untouched.
+  function fillRisk(found, opts) {
     found = found || {};
+    var replace = !!(opts && opts.replace);
     Object.keys(RISK_FIELD_IDS).forEach(function (k) {
-      if (found[k] == null || found[k] === '') return;
-      setVal(RISK_FIELD_IDS[k], found[k]);
+      if (replace) {
+        if (Object.prototype.hasOwnProperty.call(found, k)) setVal(RISK_FIELD_IDS[k], found[k] == null ? '' : found[k]);
+      } else {
+        if (found[k] == null || found[k] === '') return;
+        setVal(RISK_FIELD_IDS[k], found[k]);
+      }
     });
     formatDollarInputs();
     updatePortfolioTotal();
