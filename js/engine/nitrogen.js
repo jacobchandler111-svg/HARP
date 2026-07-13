@@ -128,39 +128,54 @@ HARP.nitrogen = (function () {
     n = Number(n); if (!isFinite(n)) return '';
     return n >= 4 ? 'A' : n >= 3 ? 'B' : n >= 2 ? 'C' : n >= 1 ? 'D' : 'F';
   }
+  // Coerce a handoff value to a finite number, tolerating $ , % and whitespace in numeric strings
+  // (a hand-made or older-adapter handoff may carry "$100,000" / "1.3%"); anything non-numeric — incl.
+  // booleans, objects, null — yields null so it never silently becomes 0/1/NaN downstream.
+  function numOrNull(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : null;
+    if (typeof v === 'string') { var s = v.replace(/[$,%\s]/g, ''); return (s === '' || isNaN(Number(s))) ? null : Number(s); }
+    return null;
+  }
+  function numOrBlank(v) { var n = numOrNull(v); return n == null ? '' : n; }
+  // A Nitrogen Risk Number is an integer 1-99; round, and blank anything out of range or non-numeric
+  // (mirrors the CSV/text path's valueFor, so a bad handoff can't feed 0/150/true into risk alignment).
+  function riskNum(v) { var n = numOrNull(v); if (n == null) return ''; n = Math.round(n); return (n >= 1 && n <= 99) ? n : ''; }
   function isHandoff(o) { return !!(o && o.schema_version && o.sections && o.sections.investments); }
   function fromHandoff(o) {
     var inv = (o.sections && o.sections.investments) || {}, pf = inv.portfolio || {};
-    var range = pf.range_6mo_pct || {};
+    var range = (pf.range_6mo_pct && typeof pf.range_6mo_pct === 'object') ? pf.range_6mo_pct : {};
     var risk = {
-      portfolioNumber: pf.risk_number != null ? Number(pf.risk_number) : '',
+      portfolioNumber: riskNum(pf.risk_number),
       // tolerance (client Risk Number) comes from the intake questionnaire (run_intake merges it in);
       // blank when the client has no questionnaire yet, which authoritatively clears the field on ingest.
-      toleranceNumber: pf.risk_tolerance_number != null ? Number(pf.risk_tolerance_number) : '',
-      rangeLowPct: range.low != null ? Number(range.low) : '',
-      rangeHighPct: range.high != null ? Number(range.high) : '',
+      toleranceNumber: riskNum(pf.risk_tolerance_number),
+      rangeLowPct: numOrBlank(range.low),
+      rangeHighPct: numOrBlank(range.high),
       gpa: pf.riskalyze_gpa != null ? gpaLetter(pf.riskalyze_gpa) : ''
     };
-    var holdings = (inv.holdings || []).map(function (h) {
+    // holdings must be an array of objects; a malformed handoff (holdings as {}/string, or a null/scalar
+    // entry) is coerced away instead of throwing.
+    var rawHoldings = Array.isArray(inv.holdings) ? inv.holdings : [];
+    var holdings = rawHoldings.filter(function (h) { return h && typeof h === 'object' && !Array.isArray(h); }).map(function (h) {
       return {
         ticker: h.ticker || '', name: h.name || h.ticker || '',
         sector: '',                                            // resolved by ticker lookup in the UI
-        value: h.market_value != null ? Number(h.market_value) : '',
-        costBasis: h.cost_basis != null ? Number(h.cost_basis) : '',
-        dividendYield: h.dividend_yield_pct != null ? Number(h.dividend_yield_pct) : '',
+        value: numOrBlank(h.market_value),
+        costBasis: numOrBlank(h.cost_basis),
+        dividendYield: numOrBlank(h.dividend_yield_pct),
         accountType: acctType(h.account_type || h.account)
       };
     });
-    var tx = (o.sections && o.sections.tax) || {};
+    var tx = (o.sections && typeof o.sections.tax === 'object' && o.sections.tax) || {};
     var tax = {
       filingStatus: tx.filing_status || '',
-      income: tx.gross_income != null ? Number(tx.gross_income) : '',
-      agi: tx.agi != null ? Number(tx.agi) : ''
+      income: numOrBlank(tx.gross_income),
+      agi: numOrBlank(tx.agi)
     };
     return {
       risk: risk, holdings: holdings, tax: tax,
-      portfolio: { totalValue: pf.total_value, allocation: pf.allocation_pct },
-      client: o.client || {}, harpReady: !!o.harp_ready
+      portfolio: { totalValue: numOrBlank(pf.total_value), allocation: pf.allocation_pct },
+      client: (o.client && typeof o.client === 'object') ? o.client : {}, harpReady: !!o.harp_ready
     };
   }
 
