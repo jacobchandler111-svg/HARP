@@ -36,9 +36,19 @@ HARP.config = {
     }
   },
 
-  // Age-based "prudent" allocation guideline: ~(base - age)% in stocks. Actual stock % deviating from
-  // that by more than moderateDeviation points is a moderate concern; past criticalDeviation a critical
-  // — but being under-weighted in stocks is only critical for a growth goal (see allocation.js).
+  // Investment risk tolerance — Nitrogen / Riskalyze "Risk Number" (1-99). The client's risk-tolerance
+  // number is compared to their current portfolio's risk number; the GAP drives the Investments risk
+  // assessment. This REPLACED the age-based (110-minus-age) allocation check. Direction matters:
+  //   • Portfolio riskier than tolerance (over-risk)  -> critical past criticalGap, any goal.
+  //   • Portfolio tamer than tolerance (under-risk)   -> critical only for a GROWTH goal; else moderate.
+  risk: {
+    scaleMax: 99,        // Nitrogen Risk Number scale (1-99)
+    alignedBand: 10,     // |portfolio - tolerance| within this => aligned (no concern)
+    criticalGap: 20      // a gap beyond this => critical; between alignedBand and this => moderate
+  },
+
+  // RETIRED (superseded by `risk` above / js/engine/risk.js): the age-based "prudent" allocation
+  // guideline, ~(base - age)% in stocks. Kept for reference in case allocation.js is ever re-wired.
   allocation: { base: 110, moderateDeviation: 25, criticalDeviation: 50 },
 
   // Assumed retirement age — used to derive remaining working years from the client's age (insurance).

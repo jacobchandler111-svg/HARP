@@ -120,6 +120,68 @@ HARP.ui.forms = (function () {
       '</div>';
   }
 
+  // ---------------------------------------------------------------- risk profile (Nitrogen / Riskalyze)
+  // The full set of numbers an advisor reads off a Nitrogen report: the two Risk Numbers (1-99), the
+  // time horizon, Nitrogen's 6-month 95% projected range ($ and %), and the portfolio GPA. Manual entry
+  // now; a Nitrogen dropzone sits on top for the auto-parse step that will fill these fields next.
+  function buildRiskInputs() {
+    $('risk-inputs').innerHTML =
+      '<h4 class="sub">Risk profile (Nitrogen / Riskalyze)</h4>' +
+      '<div class="dropzone" data-upload="nitrogen">' +
+        '<input type="file" class="dz-input" accept=".pdf,.png,.jpg,.jpeg" hidden />' +
+        '<p class="dz-text">Drag &amp; drop the Nitrogen / Riskalyze report here, or ' +
+          '<button type="button" class="link-btn dz-browse">browse</button></p>' +
+        '<p class="dz-note">Automatic extraction of the Risk Numbers arrives next — for now, enter the values manually below.</p>' +
+        '<ul class="dz-files"></ul>' +
+      '</div>' +
+      '<div class="grid">' +
+        '<label>Client Risk Number (risk tolerance, 1–99)' +
+          '<input type="number" min="1" max="99" step="1" id="risk-tolerance" placeholder="e.g. 55" /></label>' +
+        '<label>Portfolio Risk Number (1–99)' +
+          '<input type="number" min="1" max="99" step="1" id="risk-portfolio" placeholder="e.g. 72" /></label>' +
+        '<label>Time horizon (years)' +
+          '<input type="number" min="0" step="1" id="risk-horizon" placeholder="e.g. 20" /></label>' +
+        '<label>Portfolio GPA' +
+          '<select id="risk-gpa">' +
+            '<option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>F</option>' +
+          '</select></label>' +
+      '</div>' +
+      '<div class="subq-label">Nitrogen 6-month 95% range <span class="opt">(from the report)</span></div>' +
+      '<div class="grid">' +
+        '<label>Downside (%)' +
+          '<span class="pct-field"><input type="number" step="0.1" id="risk-rangeLowPct" placeholder="e.g. -18" /><span class="pct-suffix">%</span></span></label>' +
+        '<label>Upside (%)' +
+          '<span class="pct-field"><input type="number" step="0.1" id="risk-rangeHighPct" placeholder="e.g. 24" /><span class="pct-suffix">%</span></span></label>' +
+        '<label>Downside ($)' +
+          '<input type="text" inputmode="decimal" class="dollar" id="risk-rangeLowAmt" placeholder="0" /></label>' +
+        '<label>Upside ($)' +
+          '<input type="text" inputmode="decimal" class="dollar" id="risk-rangeHighAmt" placeholder="0" /></label>' +
+      '</div>';
+  }
+  function readRisk() {
+    return {
+      toleranceNumber: numOrBlank('risk-tolerance'),
+      portfolioNumber: numOrBlank('risk-portfolio'),
+      timeHorizonYears: numOrBlank('risk-horizon'),
+      gpa: val('risk-gpa'),
+      rangeLowPct: numOrBlank('risk-rangeLowPct'),
+      rangeHighPct: numOrBlank('risk-rangeHighPct'),
+      rangeLowAmt: numOrBlank('risk-rangeLowAmt'),
+      rangeHighAmt: numOrBlank('risk-rangeHighAmt')
+    };
+  }
+  function loadRisk(risk) {
+    risk = risk || {};
+    setVal('risk-tolerance', risk.toleranceNumber);
+    setVal('risk-portfolio', risk.portfolioNumber);
+    setVal('risk-horizon', risk.timeHorizonYears);
+    setVal('risk-gpa', risk.gpa);
+    setVal('risk-rangeLowPct', risk.rangeLowPct);
+    setVal('risk-rangeHighPct', risk.rangeHighPct);
+    setVal('risk-rangeLowAmt', risk.rangeLowAmt);
+    setVal('risk-rangeHighAmt', risk.rangeHighAmt);
+  }
+
   // Primary goal drives which follow-up fields show: Growth -> last-year return; Income -> income vs draw.
   function buildGoalInput() {
     $('goal-input').innerHTML =
@@ -378,6 +440,7 @@ HARP.ui.forms = (function () {
       taxFree: taxBucket('roth'),
       goal: goalVal(),
       age: numOrBlank('age'),
+      risk: readRisk(),
       yearReturnPct: numOrBlank('yearReturnPct'),
       fixedIncomeValue: num('fixedIncomeValue'),
       fixedIncomeIncome: num('fixedIncomeIncome'),
@@ -396,6 +459,7 @@ HARP.ui.forms = (function () {
     setVal('fixedIncomeAccount', p.fixedIncomeAccount || 'taxable');
     setGoal(p.goal);
     setVal('age', p.age);
+    loadRisk(p.risk);
     setVal('yearReturnPct', p.yearReturnPct);
     setVal('fixedIncomeValue', p.fixedIncomeValue);
     setVal('fixedIncomeIncome', p.fixedIncomeIncome);
@@ -428,6 +492,7 @@ HARP.ui.forms = (function () {
   }
   function init() {
     buildGoalInput();
+    buildRiskInputs();
     buildPerformanceInputs();
     buildInsuranceInputs();
     buildLegalChecklist();

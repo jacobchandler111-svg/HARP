@@ -21,7 +21,22 @@ HARP.sample = {
   // demonstrates the income-vs-withdrawal shortfall check.) The return isn't compared to the market here
   // because this portfolio isn't 100% stock (it has fixed income).
   goal: 'growth',
-  age: 45,                    // ~65% stock guideline (110 - 45); 82% actual is within tolerance
+  age: 45,                    // used for insurance years-to-retirement (the 110-age allocation check is retired)
+
+  // Risk profile (Nitrogen / Riskalyze). The portfolio Risk Number (78) sits well above the client's
+  // risk tolerance (55) — a 23-point over-risk gap (past the 20-point critical threshold), so the
+  // Investments assessment raises a CRITICAL risk-alignment finding. The 6-month 95% range is context.
+  risk: {
+    toleranceNumber: 55,
+    portfolioNumber: 78,
+    timeHorizonYears: 20,
+    rangeLowPct: -18,
+    rangeHighPct: 24,
+    rangeLowAmt: 138600,
+    rangeHighAmt: 184800,
+    gpa: 'B'
+  },
+
   yearReturnPct: 5,
   fixedIncomeValue: 150000,   // bonds, etc.; sums into the (now computed) total portfolio value
   fixedIncomeAccount: 'traditional',   // held in a tax-deferred account
