@@ -5,7 +5,7 @@ window.HARP = window.HARP || {};
 HARP.assessment = (function () {
   // Maps the finding `category` strings each engine emits into the four display domains.
   var CATEGORIES = [
-    { key: 'investments', label: 'Investments', match: ['Investment concentration', 'Sector exposure', 'Asset allocation', 'Investment performance', 'Investment income', 'Unrealized gains'] },
+    { key: 'investments', label: 'Investments', match: ['Investment concentration', 'Sector exposure', 'Investment risk alignment', 'Investment performance', 'Investment income', 'Unrealized gains'] },
     { key: 'insurance',   label: 'Insurance',   match: ['Insurance'] },
     { key: 'tax',         label: 'Tax',         match: ['Tax diversification', 'Accounting / tax', 'Unrealized gains'] },
     { key: 'legal',       label: 'Legal',       match: ['Legal / estate'] }
@@ -16,7 +16,7 @@ HARP.assessment = (function () {
 
     var accounting = HARP.accounting.analyze(profile, cfg);
     var concentration = HARP.concentration.analyze(profile.holdings || [], cfg);
-    var allocation = HARP.allocation.analyze(profile, cfg);
+    var risk = HARP.risk.analyze(profile, cfg);   // Nitrogen risk-alignment (replaced the 110-age allocation check)
     var gains = HARP.gains.analyze(profile.holdings || [], cfg);
     var performance = HARP.performance.analyze(profile, cfg);
     var income = HARP.income.analyze(profile, cfg);
@@ -25,7 +25,7 @@ HARP.assessment = (function () {
     var legal = HARP.legal.analyze(profile, cfg);
 
     var findings = [].concat(
-      accounting.findings, concentration.findings, allocation.findings, gains.findings, performance.findings, income.findings, insurance.findings, tax.findings, legal.findings
+      accounting.findings, concentration.findings, risk.findings, gains.findings, performance.findings, income.findings, insurance.findings, tax.findings, legal.findings
     );
 
     var counts = countSeverities(findings);
@@ -34,7 +34,7 @@ HARP.assessment = (function () {
       profile: profile,
       accounting: accounting,
       concentration: concentration,
-      allocation: allocation,
+      risk: risk,
       gains: gains,
       performance: performance,
       income: income,

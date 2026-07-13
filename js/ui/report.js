@@ -134,7 +134,7 @@ HARP.ui.report = (function () {
     return {
       investments: !!((p.holdings && p.holdings.length > 0) ||
                    (Number(p.fixedIncomeValue) || 0) > 0 ||
-                   (a.allocation && a.allocation.actualStockPct != null) ||
+                   (a.risk && a.risk.provided) ||
                    (a.performance && a.performance.provided) ||
                    (a.concentration && a.concentration.total > 0)),
       tax: !!((a.tax && a.tax.total > 0) || (Number(p.income) || 0) > 0 ||
@@ -239,23 +239,26 @@ HARP.ui.report = (function () {
     return g;
   }
   function investmentRec(fs) {
-    var tickers = [], sectors = [], perf = false, gains = false, shortfall = false, alloc = false;
+    var tickers = [], sectors = [], perf = false, gains = false, shortfall = false, misaligned = false;
     fs.forEach(function (f) {
       if (f.category === 'Investment concentration') { var m = f.title.match(/^(\S+)/); if (m) tickers.push(m[1]); }
       else if (f.category === 'Sector exposure') { var s = f.title.match(/^(.+?) sector is/); if (s) sectors.push(s[1]); }
-      else if (f.category === 'Asset allocation') alloc = true;
+      else if (f.category === 'Investment risk alignment') misaligned = true;
       else if (f.category === 'Investment performance') perf = true;
       else if (f.category === 'Unrealized gains') gains = true;
       else if (f.category === 'Investment income') shortfall = true;
     });
+    // Risk misalignment leads the recommendation on its own; when other issues also lead, it becomes a bit.
+    var leadIsMisalign = misaligned && !(tickers.length || sectors.length);
     var bits = [];
     if (tickers.length) bits.push('trimming the concentrated positions (' + tickers.join(', ') + ')');
     if (sectors.length) bits.push('reducing your ' + naturalJoin(sectors) + ' concentration');
-    if (alloc) bits.push('rebalancing toward an age-appropriate stock / fixed-income mix');
+    if (misaligned && !leadIsMisalign) bits.push('realigning the portfolio’s risk to your risk tolerance');
     if (gains) bits.push('managing the embedded gains tax-efficiently');
     if (perf) bits.push('pursuing a stronger risk-adjusted return relative to the market');
     if (shortfall) bits.push('closing the gap between your portfolio income and your withdrawals');
     var lead = (tickers.length || sectors.length) ? 'build a more diversified investment plan'
+             : misaligned ? 'align your portfolio with your risk tolerance'
              : shortfall ? 'strengthen your income plan'
              : 'strengthen your investment plan';
     return 'Speak with one of our advisors to ' + lead + (bits.length ? ' — ' + naturalJoin(bits) : '') + '.';

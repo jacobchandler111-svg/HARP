@@ -1,3 +1,7 @@
+// RETIRED — no longer wired into assessment.js or index.html. Superseded by js/engine/risk.js, which
+// assesses investment risk from a Nitrogen "Risk Number" (tolerance vs. portfolio) instead of age. Kept
+// on disk for reference / easy revival; the module is not loaded, so nothing calls HARP.allocation.
+//
 // Age-based "prudent" asset allocation. The rule of thumb: roughly (base - age)% in stocks (base = 110),
 // the rest in fixed income. Deviating from that guideline by more than a moderate band is a moderate
 // concern; past the critical band it becomes critical — BUT direction matters:
