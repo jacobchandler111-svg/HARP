@@ -128,10 +128,10 @@ HARP.ui.forms = (function () {
     $('risk-inputs').innerHTML =
       '<h4 class="sub">Risk profile (Nitrogen / Riskalyze)</h4>' +
       '<div class="dropzone" data-ingest="nitrogen">' +
-        '<input type="file" class="dz-input" accept=".pdf,.csv,.tsv,.xlsx,.xls" hidden />' +
-        '<p class="dz-text">Drag &amp; drop the Nitrogen / Riskalyze report here, or ' +
+        '<input type="file" class="dz-input" accept=".json,.pdf,.csv,.tsv,.xlsx,.xls" hidden />' +
+        '<p class="dz-text">Drag &amp; drop the Nitrogen <b>handoff.json</b> (or a raw Nitrogen report) here, or ' +
           '<button type="button" class="link-btn dz-browse">browse</button></p>' +
-        '<p class="dz-note">PDF, Excel, or CSV — read on your device to fill the Risk Numbers below, which you can then verify. Or enter them manually.</p>' +
+        '<p class="dz-note">The <b>handoff.json</b> fills holdings + Risk Numbers; a raw PDF / Excel / CSV fills the Risk Numbers only. Read on your device — verify below. Or enter manually.</p>' +
         '<ul class="dz-files"></ul>' +
       '</div>' +
       '<div class="grid">' +
@@ -196,6 +196,31 @@ HARP.ui.forms = (function () {
     });
     formatDollarInputs();
     updatePortfolioTotal();
+    save();
+  }
+
+  // Replace the holdings table with an ingested set (from a Nitrogen handoff). Sector resolves from the
+  // ticker map when the handoff doesn't carry one. The table stays fully editable afterward.
+  function fillHoldings(holdings) {
+    if (!holdings || !holdings.length) return;
+    $('holdings-body').innerHTML = '';
+    holdings.forEach(function (h) {
+      if (!h.sector) { var s = HARP.sectors.lookup(h.ticker); if (s) h.sector = s; }
+      addHoldingRow(h);
+    });
+    formatDollarInputs();
+    updatePortfolioTotal();
+    save();
+  }
+
+  // Tax section is ingest-driven (from the Nitrogen tax snapshot). Fill only the values present; the
+  // fields stay editable so an advisor can adjust or supply them until the tax lane populates them.
+  function fillTax(tax) {
+    tax = tax || {};
+    if (tax.filingStatus) setVal('filingStatus', tax.filingStatus);
+    if (tax.income != null && tax.income !== '') setVal('income', tax.income);
+    if (tax.agi != null && tax.agi !== '') setVal('agi', tax.agi);
+    formatDollarInputs();
     save();
   }
 
@@ -523,6 +548,6 @@ HARP.ui.forms = (function () {
 
   return {
     init: init, readProfile: readProfile, loadProfile: loadProfile, reset: reset,
-    addHoldingRow: addHoldingRow, fillRisk: fillRisk
+    addHoldingRow: addHoldingRow, fillRisk: fillRisk, fillHoldings: fillHoldings, fillTax: fillTax
   };
 })();

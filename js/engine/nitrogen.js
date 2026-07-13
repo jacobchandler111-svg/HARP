@@ -113,5 +113,58 @@ HARP.nitrogen = (function () {
     return fromText(payload || '');
   }
 
-  return { extract: extract, parseCsv: parseCsv, fromText: fromText, fromRows: fromRows };
+  // ---- standardized handoff (our schema) -> HARP shapes ---------------------------------------------
+  // The Nitrogen lane emits a clean handoff.json (contract in HANDOFF.md). When THAT file is dropped we
+  // read the investments directly instead of heuristically scraping a raw export — so we get exact
+  // holdings, not just the Risk Numbers. Still fully client-side: it's a local file, nothing leaves.
+  var ACCT_MAP = {
+    'taxable': 'taxable', 'individual': 'taxable', 'brokerage': 'taxable', 'joint': 'taxable',
+    'traditional ira': 'traditional', 'traditional': 'traditional', 'ira': 'traditional',
+    '401k': 'traditional', 'roth ira': 'roth', 'roth': 'roth'
+  };
+  function acctType(s) { return ACCT_MAP[norm(s)] || 'taxable'; }
+  // Nitrogen's numeric "Riskalyze GPA" (~0–4.3 scale) -> HARP's letter grade.
+  function gpaLetter(n) {
+    n = Number(n); if (!isFinite(n)) return '';
+    return n >= 4 ? 'A' : n >= 3 ? 'B' : n >= 2 ? 'C' : n >= 1 ? 'D' : 'F';
+  }
+  function isHandoff(o) { return !!(o && o.schema_version && o.sections && o.sections.investments); }
+  function fromHandoff(o) {
+    var inv = (o.sections && o.sections.investments) || {}, pf = inv.portfolio || {};
+    var range = pf.range_6mo_pct || {};
+    var risk = {
+      portfolioNumber: pf.risk_number != null ? Number(pf.risk_number) : '',
+      // tolerance (client Risk Number) isn't in the handoff yet; left blank for manual entry.
+      toleranceNumber: pf.risk_tolerance_number != null ? Number(pf.risk_tolerance_number) : '',
+      rangeLowPct: range.low != null ? Number(range.low) : '',
+      rangeHighPct: range.high != null ? Number(range.high) : '',
+      gpa: pf.riskalyze_gpa != null ? gpaLetter(pf.riskalyze_gpa) : ''
+    };
+    var holdings = (inv.holdings || []).map(function (h) {
+      return {
+        ticker: h.ticker || '', name: h.name || h.ticker || '',
+        sector: '',                                            // resolved by ticker lookup in the UI
+        value: h.market_value != null ? Number(h.market_value) : '',
+        costBasis: h.cost_basis != null ? Number(h.cost_basis) : '',
+        dividendYield: h.dividend_yield_pct != null ? Number(h.dividend_yield_pct) : '',
+        accountType: acctType(h.account_type || h.account)
+      };
+    });
+    var tx = (o.sections && o.sections.tax) || {};
+    var tax = {
+      filingStatus: tx.filing_status || '',
+      income: tx.gross_income != null ? Number(tx.gross_income) : '',
+      agi: tx.agi != null ? Number(tx.agi) : ''
+    };
+    return {
+      risk: risk, holdings: holdings, tax: tax,
+      portfolio: { totalValue: pf.total_value, allocation: pf.allocation_pct },
+      client: o.client || {}, harpReady: !!o.harp_ready
+    };
+  }
+
+  return {
+    extract: extract, parseCsv: parseCsv, fromText: fromText, fromRows: fromRows,
+    isHandoff: isHandoff, fromHandoff: fromHandoff
+  };
 })();

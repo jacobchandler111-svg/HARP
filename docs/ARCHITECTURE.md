@@ -58,6 +58,15 @@ one module is where the patterns get tuned; the readers (`js/ui/ingest.js`) and 
 not change. Extraction failures degrade gracefully to manual entry — the fields are always editable,
 and the advisor verifies the auto-filled values before generating the report.
 
+**Preferred input — the standardized `handoff.json`.** When the Nitrogen lane's pipeline runs it emits a
+clean `handoff.json` (contract in the pipeline's `HANDOFF.md`). Dropping **that** file fills the whole
+**Investments** section — exact **holdings** (ticker / market value / cost basis / account type), the
+Risk Numbers, and the 6-month range — plus the **Tax** fields, all via `HARP.nitrogen.fromHandoff` with
+no heuristics. It is still a local file, so nothing leaves the machine. A raw PDF / Excel / CSV remains a
+fallback that fills the Risk Numbers only (holdings can't be reliably scraped from a rendered PDF).
+**Investments + Tax are ingest-driven; Insurance + Legal stay manual** — the Tax section reads
+`handoff.sections.tax` (structured-but-null until the tax lane lands) with editable fallback.
+
 ## 4. Code organization
 
 ```

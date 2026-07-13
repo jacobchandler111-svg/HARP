@@ -38,16 +38,48 @@ HARP.ui.ingest = (function () {
 
   function handle(dz, file) {
     status(dz, 'Reading “' + file.name + '”…', 'busy');
-    var e = ext(file.name), p;
+    var e = ext(file.name);
+    // Our standardized handoff.json — parse it directly (exact holdings + risk), no heuristics.
+    if (e === 'json') {
+      readText(file)
+        .then(function (t) { applyHandoff(dz, file, JSON.parse(t)); })
+        .catch(function (err) {
+          status(dz, 'Couldn’t read “' + file.name + '” (' + ((err && err.message) || err) + '). Is it a valid handoff.json?', 'warn');
+        });
+      return;
+    }
+    var p;
     if (e === 'csv' || e === 'tsv' || e === 'txt') p = readText(file).then(function (t) { return HARP.nitrogen.extract('csv', t); });
     else if (e === 'xlsx' || e === 'xls' || e === 'xlsm') p = readXlsx(file);
     else if (e === 'pdf') p = readPdf(file);
-    else { status(dz, 'Unsupported file type “.' + e + '”. Use a PDF, Excel, or CSV export — or enter the numbers manually below.', 'warn'); return; }
+    else { status(dz, 'Unsupported file type “.' + e + '”. Drop the handoff.json, or a PDF / Excel / CSV export — or enter the numbers manually below.', 'warn'); return; }
 
     p.then(function (found) { apply(dz, file, found); })
      .catch(function (err) {
         status(dz, 'Couldn’t read “' + file.name + '” automatically (' + ((err && err.message) || err) + '). Enter the numbers manually below.', 'warn');
      });
+  }
+
+  // The standardized Nitrogen handoff.json: fill the holdings table AND the Risk Numbers directly
+  // (exact values from the pipeline, not heuristically scraped). Investments recalibrate off these.
+  function applyHandoff(dz, file, obj) {
+    if (!HARP.nitrogen.isHandoff(obj)) {
+      status(dz, '“' + file.name + '” isn’t a HARP handoff file. Drop a Nitrogen PDF / Excel / CSV, or a *_handoff.json.', 'warn');
+      return;
+    }
+    var h = HARP.nitrogen.fromHandoff(obj);
+    var nH = (h.holdings || []).length;
+    if (nH) HARP.ui.forms.fillHoldings(h.holdings);
+    HARP.ui.forms.fillRisk(h.risk);
+    if (h.tax) HARP.ui.forms.fillTax(h.tax);   // ingest-driven tax (from the Nitrogen snapshot)
+    var riskGot = Object.keys(FIELD_LABELS)
+      .filter(function (k) { return h.risk[k] != null && h.risk[k] !== ''; })
+      .map(function (k) { return FIELD_LABELS[k] + ' ' + h.risk[k]; });
+    status(dz, 'Ingested handoff: ' + nH + ' holding' + (nH === 1 ? '' : 's') +
+      (riskGot.length ? ', ' + riskGot.join(', ') : '') +
+      '. Investments recalibrated from Nitrogen — verify below before previewing.' +
+      (obj.harp_ready ? '' : ' ⚠ handoff not marked HARP-ready.'),
+      obj.harp_ready ? 'ok' : 'warn');
   }
 
   function apply(dz, file, found) {
