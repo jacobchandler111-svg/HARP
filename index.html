@@ -21,7 +21,7 @@
     <section id="screen-input" class="screen">
       <div class="screen-head no-print">
         <h1>Client information</h1>
-        <p class="screen-sub">Drop the Nitrogen <b>handoff.json</b> in section 1 to auto-fill investments (and tax when available). Insurance &amp; Legal are entered manually. Everything stays editable — verify before previewing.</p>
+        <p class="screen-sub">Drop the Nitrogen <b>handoff.json</b> in section 1 — it fills the risk profile and portfolio from Riskalyze. Add the client's goal, age, and monthly withdrawal need. Insurance &amp; Legal are entered manually. Verify before previewing.</p>
       </div>
 
       <form id="harp-form">
@@ -35,24 +35,25 @@
         <section class="accordion-item" data-section="investments">
           <button type="button" class="accordion-header" aria-expanded="true">
             <span class="chev" aria-hidden="true">▾</span>
-            <span class="acc-title">1 · Investment statements</span>
+            <span class="acc-title">1 · Investments (Nitrogen / Riskalyze)</span>
           </button>
           <div class="accordion-body">
             <div id="risk-inputs"><!-- Nitrogen / Riskalyze ingest (dropzone + Risk Numbers) injected by forms.js; the handoff.json also fills holdings below --></div>
 
             <div id="goal-input"><!-- primary goal (Growth / Income) injected by forms.js --></div>
 
-            <h4 class="sub">Stock holdings</h4>
-            <table class="holdings" id="holdings">
-              <thead>
-                <tr><th>Ticker</th><th>Sector</th><th>Account</th><th class="num">Market value ($)</th><th class="num">Cost basis ($)</th><th class="num">Dividend yield (%)</th><th aria-label="Remove"></th></tr>
-              </thead>
-              <tbody id="holdings-body"><!-- rows injected by forms.js --></tbody>
-            </table>
-            <button type="button" class="link-btn" id="add-holding">+ Add holding</button>
+            <!-- Holdings arrive inside the handoff and still power the tax/income analysis, but the advisor
+                 no longer edits them here — Nitrogen is the source of truth for the portfolio. Kept in the
+                 DOM (hidden) so the ingest + downstream readers keep working. -->
+            <div hidden aria-hidden="true">
+              <table class="holdings" id="holdings">
+                <tbody id="holdings-body"><!-- rows injected by forms.js from the handoff --></tbody>
+              </table>
+              <button type="button" class="link-btn" id="add-holding">+ Add holding</button>
+            </div>
 
-            <h4 class="sub">Portfolio information</h4>
-            <div class="grid" id="performance-inputs"><!-- value + performance fields injected by forms.js --></div>
+            <h4 class="sub">Portfolio &amp; withdrawals</h4>
+            <div class="grid" id="performance-inputs"><!-- value/income (from Nitrogen) + monthly need, injected by forms.js --></div>
           </div>
         </section>
 

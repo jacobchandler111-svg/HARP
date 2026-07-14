@@ -151,7 +151,8 @@ HARP.nitrogen = (function () {
       toleranceNumber: riskNum(pf.risk_tolerance_number),
       rangeLowPct: numOrBlank(range.low),
       rangeHighPct: numOrBlank(range.high),
-      gpa: pf.riskalyze_gpa != null ? gpaLetter(pf.riskalyze_gpa) : ''
+      gpa: pf.riskalyze_gpa != null ? gpaLetter(pf.riskalyze_gpa) : '',
+      expenseRatio: numOrBlank(pf.expense_ratio_pct)   // Riskalyze cost signal (blank when not reported)
     };
     // holdings must be an array of objects; a malformed handoff (holdings as {}/string, or a null/scalar
     // entry) is coerced away instead of throwing.

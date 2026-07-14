@@ -44,7 +44,22 @@ HARP.config = {
   risk: {
     scaleMax: 99,        // Nitrogen Risk Number scale (1-99)
     alignedBand: 10,     // |portfolio - tolerance| within this => aligned (no concern)
-    criticalGap: 20      // a gap beyond this => critical; between alignedBand and this => moderate
+    criticalGap: 20,     // a gap beyond this => critical; between alignedBand and this => moderate
+    // Risk Number -> plain band label (matches the intake questionnaire's bands).
+    bands: [[33, 'Conservative'], [66, 'Moderate'], [99, 'Aggressive']]
+  },
+
+  // Supporting Riskalyze data-point signals for the Investments verdict (beyond the tolerance/portfolio
+  // alignment). These are Riskalyze's OWN outputs — no HARP re-calculation.
+  riskalyze: {
+    // Portfolio GPA (Riskalyze's risk-adjusted quality grade): C is a moderate concern, D/F critical,
+    // A/B a clean pass.
+    gpaModerate: ['C'],
+    gpaCritical: ['D', 'F'],
+    // Weighted expense ratio (%): a cost signal. At/below "low" reads as a low-cost portfolio (good).
+    expenseLowPct: 0.40,
+    expenseModeratePct: 0.75,
+    expenseCriticalPct: 1.25
   },
 
   // RETIRED (superseded by `risk` above / js/engine/risk.js): the age-based "prudent" allocation

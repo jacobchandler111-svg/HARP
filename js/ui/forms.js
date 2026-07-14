@@ -94,29 +94,24 @@ HARP.ui.forms = (function () {
 
   // ---------------------------------------------------------------- performance (most recent full year)
   function perfYear() { return new Date().getFullYear() - 1; }
+  // Portfolio value + income come from the Nitrogen run (shown read-only to verify). The monthly
+  // withdrawal need is the one thing Riskalyze can't know — a client planning input we still collect.
+  // The old manual fixed-income / annuity / prior-year-return fields are retired (hidden but present so
+  // any downstream reader that references them still resolves to blank).
   function buildPerformanceInputs() {
     $('performance-inputs').innerHTML =
-      '<label>Amount invested in fixed income ($)' +
-        '<input type="text" inputmode="decimal" class="dollar" id="fixedIncomeValue" placeholder="0" /></label>' +
-      // Reveals only when a fixed-income amount is entered.
-      '<div class="pi-fields" id="fixed-income-income-field" hidden>' +
-        '<label>Annual fixed income ($)' +
-          '<input type="text" inputmode="decimal" class="dollar" id="fixedIncomeIncome" placeholder="0" /></label>' +
-        '<label>Fixed income account type' +
-          '<select id="fixedIncomeAccount">' + accountTypeOptions('taxable') + '</select></label>' +
-      '</div>' +
       '<div class="computed-row"><span class="computed-label">Total portfolio value</span>' +
         '<span class="computed-val" id="portfolioValueOut">$0</span></div>' +
       '<div class="computed-row"><span class="computed-label">Total portfolio income (annual)</span>' +
         '<span class="computed-val" id="portfolioIncomeOut">$0</span></div>' +
-      // Monthly withdrawal applies to EITHER goal — a growth household may still draw from the account,
-      // and income vs. that draw is assessed the same way for both.
       '<label>Monthly needs / withdrawals from account ($)' +
         '<input type="text" inputmode="decimal" class="dollar" id="monthlyDrawdown" placeholder="0" /></label>' +
-      // Growth goal only: last full-year return vs. the stock-weighted market.
-      '<div class="pi-fields" id="goal-growth-fields">' +
-        '<label>' + perfYear() + ' portfolio performance' +
-          '<span class="pct-field"><input type="number" id="yearReturnPct" step="0.1" placeholder="e.g. 12.5" /><span class="pct-suffix">%</span></span></label>' +
+      // Retired inputs — kept hidden so val()/num() still resolve (to blank) without errors.
+      '<div hidden aria-hidden="true">' +
+        '<input type="text" class="dollar" id="fixedIncomeValue" />' +
+        '<div id="fixed-income-income-field"><input type="text" class="dollar" id="fixedIncomeIncome" />' +
+          '<select id="fixedIncomeAccount">' + accountTypeOptions('taxable') + '</select></div>' +
+        '<div id="goal-growth-fields"><input type="number" id="yearReturnPct" /></div>' +
       '</div>';
   }
 
@@ -128,10 +123,10 @@ HARP.ui.forms = (function () {
     $('risk-inputs').innerHTML =
       '<h4 class="sub">Risk profile (Nitrogen / Riskalyze)</h4>' +
       '<div class="dropzone" data-ingest="nitrogen">' +
-        '<input type="file" class="dz-input" accept=".json,.pdf,.csv,.tsv,.xlsx,.xls" hidden />' +
-        '<p class="dz-text">Drag &amp; drop the Nitrogen <b>handoff.json</b> (or a raw Nitrogen report) here, or ' +
+        '<input type="file" class="dz-input" accept=".json" hidden />' +
+        '<p class="dz-text">Drag &amp; drop the Nitrogen <b>handoff.json</b> here, or ' +
           '<button type="button" class="link-btn dz-browse">browse</button></p>' +
-        '<p class="dz-note">The <b>handoff.json</b> fills holdings + Risk Numbers; a raw PDF / Excel / CSV fills the Risk Numbers only. Read on your device — verify below. Or enter manually.</p>' +
+        '<p class="dz-note">Fills the Risk Numbers, GPA, expense ratio, and holdings from the Nitrogen run. The brokerage statement itself is processed in Nitrogen — verify below.</p>' +
         '<ul class="dz-files"></ul>' +
       '</div>' +
       '<div class="grid">' +
@@ -139,12 +134,14 @@ HARP.ui.forms = (function () {
           '<input type="number" min="1" max="99" step="1" id="risk-tolerance" placeholder="e.g. 55" /></label>' +
         '<label>Portfolio Risk Number (1–99)' +
           '<input type="number" min="1" max="99" step="1" id="risk-portfolio" placeholder="e.g. 72" /></label>' +
-        '<label>Time horizon (years)' +
-          '<input type="number" min="0" step="1" id="risk-horizon" placeholder="e.g. 20" /></label>' +
         '<label>Portfolio GPA' +
           '<select id="risk-gpa">' +
             '<option value="">—</option><option>A</option><option>B</option><option>C</option><option>D</option><option>F</option>' +
           '</select></label>' +
+        '<label>Expense ratio (%)' +
+          '<span class="pct-field"><input type="number" step="0.01" id="risk-expense" placeholder="e.g. 0.35" /><span class="pct-suffix">%</span></span></label>' +
+        '<label>Time horizon (years)' +
+          '<input type="number" min="0" step="1" id="risk-horizon" placeholder="e.g. 20" /></label>' +
       '</div>' +
       '<div class="subq-label">Nitrogen 6-month 95% range <span class="opt">(from the report)</span></div>' +
       '<div class="grid">' +
@@ -162,6 +159,7 @@ HARP.ui.forms = (function () {
     return {
       toleranceNumber: numOrBlank('risk-tolerance'),
       portfolioNumber: numOrBlank('risk-portfolio'),
+      expenseRatio: numOrBlank('risk-expense'),
       timeHorizonYears: numOrBlank('risk-horizon'),
       gpa: val('risk-gpa'),
       rangeLowPct: numOrBlank('risk-rangeLowPct'),
@@ -184,7 +182,7 @@ HARP.ui.forms = (function () {
   // Keys match the profile.risk shape.
   var RISK_FIELD_IDS = {
     toleranceNumber: 'risk-tolerance', portfolioNumber: 'risk-portfolio', timeHorizonYears: 'risk-horizon',
-    gpa: 'risk-gpa', rangeLowPct: 'risk-rangeLowPct', rangeHighPct: 'risk-rangeHighPct',
+    gpa: 'risk-gpa', expenseRatio: 'risk-expense', rangeLowPct: 'risk-rangeLowPct', rangeHighPct: 'risk-rangeHighPct',
     rangeLowAmt: 'risk-rangeLowAmt', rangeHighAmt: 'risk-rangeHighAmt'
   };
   // Two modes, because two sources disagree on what a blank means:

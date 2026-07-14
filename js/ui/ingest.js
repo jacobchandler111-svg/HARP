@@ -11,7 +11,7 @@ HARP.ui.ingest = (function () {
     toleranceNumber: 'Risk tolerance', portfolioNumber: 'Portfolio risk',
     rangeLowPct: 'Downside %', rangeHighPct: 'Upside %',
     rangeLowAmt: 'Downside $', rangeHighAmt: 'Upside $',
-    timeHorizonYears: 'Time horizon', gpa: 'GPA'
+    timeHorizonYears: 'Time horizon', gpa: 'GPA', expenseRatio: 'Expense ratio'
   };
 
   function init(root) {
@@ -37,10 +37,10 @@ HARP.ui.ingest = (function () {
   function ext(name) { var m = String(name).toLowerCase().match(/\.([a-z0-9]+)$/); return m ? m[1] : ''; }
 
   function handle(dz, file) {
-    status(dz, 'Reading “' + file.name + '”…', 'busy');
-    var e = ext(file.name);
-    // Our standardized handoff.json — parse it directly (exact holdings + risk), no heuristics.
-    if (e === 'json') {
+    // HARP now ingests ONLY the standardized Nitrogen handoff.json (exact holdings + Risk Numbers + GPA).
+    // The brokerage statement itself is processed in Nitrogen, so raw PDF/Excel/CSV are no longer parsed here.
+    if (ext(file.name) === 'json') {
+      status(dz, 'Reading “' + file.name + '”…', 'busy');
       readText(file)
         .then(function (t) { applyHandoff(dz, file, JSON.parse(t)); })
         .catch(function (err) {
@@ -48,16 +48,8 @@ HARP.ui.ingest = (function () {
         });
       return;
     }
-    var p;
-    if (e === 'csv' || e === 'tsv' || e === 'txt') p = readText(file).then(function (t) { return HARP.nitrogen.extract('csv', t); });
-    else if (e === 'xlsx' || e === 'xls' || e === 'xlsm') p = readXlsx(file);
-    else if (e === 'pdf') p = readPdf(file);
-    else { status(dz, 'Unsupported file type “.' + e + '”. Drop the handoff.json, or a PDF / Excel / CSV export — or enter the numbers manually below.', 'warn'); return; }
-
-    p.then(function (found) { apply(dz, file, found); })
-     .catch(function (err) {
-        status(dz, 'Couldn’t read “' + file.name + '” automatically (' + ((err && err.message) || err) + '). Enter the numbers manually below.', 'warn');
-     });
+    status(dz, 'HARP takes the Nitrogen <b>handoff.json</b> (Risk Numbers, GPA, holdings). The brokerage ' +
+      'statement is processed in Nitrogen — drop the handoff.json here, or enter the numbers manually below.', 'warn');
   }
 
   // The standardized Nitrogen handoff.json: fill the holdings table AND the Risk Numbers directly
@@ -82,22 +74,6 @@ HARP.ui.ingest = (function () {
       obj.harp_ready ? 'ok' : 'warn');
   }
 
-  function apply(dz, file, found) {
-    found = found || {};
-    var present = Object.keys(FIELD_LABELS).filter(function (k) { return found[k] != null && found[k] !== ''; });
-    if (!present.length) {
-      status(dz, 'Read “' + file.name + '” but couldn’t find the Risk Numbers in it. Enter them manually below.', 'warn');
-      return;
-    }
-    HARP.ui.forms.fillRisk(found);
-    var got = present.map(function (k) { return FIELD_LABELS[k] + ' ' + found[k]; });
-    var missing = Object.keys(FIELD_LABELS).filter(function (k) { return found[k] == null || found[k] === ''; })
-      .map(function (k) { return FIELD_LABELS[k]; });
-    status(dz, 'From “' + file.name + '”: ' + got.join(', ') + '.' +
-      (missing.length ? ' Not found: ' + missing.join(', ') + '.' : '') +
-      ' Verify the values below before previewing.', 'ok');
-  }
-
   function status(dz, msg, kind) {
     var el = dz.querySelector('.dz-status');
     if (!el) { el = document.createElement('p'); el.className = 'dz-status'; dz.appendChild(el); }
@@ -119,56 +95,6 @@ HARP.ui.ingest = (function () {
     });
   }
   function readText(file) { return readWith('readAsText', file); }
-  function readArrayBuffer(file) { return readWith('readAsArrayBuffer', file); }
-
-  function readXlsx(file) {
-    return loadScript('js/vendor/xlsx.full.min.js', 'XLSX').then(function () {
-      return readArrayBuffer(file).then(function (buf) {
-        var wb = window.XLSX.read(new Uint8Array(buf), { type: 'array' });
-        var rows = [];
-        wb.SheetNames.forEach(function (name) {
-          rows = rows.concat(window.XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: false, defval: '' }));
-        });
-        return HARP.nitrogen.extract('rows', rows);
-      });
-    });
-  }
-  function readPdf(file) {
-    return loadScript('js/vendor/pdf.min.js', 'pdfjsLib').then(function () {
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'js/vendor/pdf.worker.min.js';
-      return readArrayBuffer(file).then(function (buf) {
-        return window.pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise.then(function (pdf) {
-          var chain = Promise.resolve('');
-          for (var n = 1; n <= pdf.numPages; n++) chain = pageText(pdf, n, chain);
-          return chain.then(function (text) { return HARP.nitrogen.extract('text', text); });
-        });
-      });
-    });
-  }
-  function pageText(pdf, n, chain) {
-    return chain.then(function (acc) {
-      return pdf.getPage(n).then(function (page) {
-        return page.getTextContent().then(function (tc) {
-          return acc + ' ' + tc.items.map(function (it) { return it.str; }).join(' ');
-        });
-      });
-    });
-  }
-
-  // Lazy-load a vendored script once; resolve when its global is present.
-  var loading = {};
-  function loadScript(src, globalName) {
-    if (window[globalName]) return Promise.resolve();
-    if (loading[src]) return loading[src];
-    loading[src] = new Promise(function (res, rej) {
-      var s = document.createElement('script');
-      s.src = src; s.async = true;
-      s.onload = function () { window[globalName] ? res() : rej(new Error(globalName + ' unavailable')); };
-      s.onerror = function () { loading[src] = null; rej(new Error('failed to load ' + src)); };
-      document.head.appendChild(s);
-    });
-    return loading[src];
-  }
 
   return { init: init, clear: clear };
 })();

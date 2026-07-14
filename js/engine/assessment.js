@@ -4,10 +4,12 @@ window.HARP = window.HARP || {};
 
 HARP.assessment = (function () {
   // Maps the finding `category` strings each engine emits into the four display domains.
+  // Investments is now driven by the Riskalyze data points (alignment / quality / cost), not HARP's
+  // own holdings calculators — concentration + embedded-gains were retired (see run() below).
   var CATEGORIES = [
-    { key: 'investments', label: 'Investments', match: ['Investment concentration', 'Sector exposure', 'Investment risk alignment', 'Investment performance', 'Investment income', 'Unrealized gains'] },
+    { key: 'investments', label: 'Investments', match: ['Investment risk alignment', 'Investment quality', 'Investment cost', 'Investment performance', 'Investment income'] },
     { key: 'insurance',   label: 'Insurance',   match: ['Insurance'] },
-    { key: 'tax',         label: 'Tax',         match: ['Tax diversification', 'Accounting / tax', 'Unrealized gains'] },
+    { key: 'tax',         label: 'Tax',         match: ['Tax diversification', 'Accounting / tax'] },
     { key: 'legal',       label: 'Legal',       match: ['Legal / estate'] }
   ];
 
@@ -15,8 +17,8 @@ HARP.assessment = (function () {
     var cfg = HARP.config;
 
     var accounting = HARP.accounting.analyze(profile, cfg);
-    var concentration = HARP.concentration.analyze(profile.holdings || [], cfg);
-    var risk = HARP.risk.analyze(profile, cfg);   // Nitrogen risk-alignment (replaced the 110-age allocation check)
+    var concentration = HARP.concentration.analyze(profile.holdings || [], cfg);  // still computed for the report's portfolio-value line; its findings are NOT surfaced (retired)
+    var risk = HARP.risk.analyze(profile, cfg);   // Nitrogen risk-alignment + Riskalyze quality/cost signals — the Investments story
     var gains = HARP.gains.analyze(profile.holdings || [], cfg);
     var performance = HARP.performance.analyze(profile, cfg);
     var income = HARP.income.analyze(profile, cfg);
@@ -24,8 +26,10 @@ HARP.assessment = (function () {
     var tax = HARP.tax.analyze(profile, cfg);
     var legal = HARP.legal.analyze(profile, cfg);
 
+    // Investments findings come from the Riskalyze-driven risk module only. concentration + embedded-gains
+    // (HARP's own holdings calculators) are intentionally EXCLUDED — the portfolio is Riskalyze's job now.
     var findings = [].concat(
-      accounting.findings, concentration.findings, risk.findings, gains.findings, performance.findings, income.findings, insurance.findings, tax.findings, legal.findings
+      accounting.findings, risk.findings, performance.findings, income.findings, insurance.findings, tax.findings, legal.findings
     );
 
     var counts = countSeverities(findings);
