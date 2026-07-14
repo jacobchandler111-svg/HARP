@@ -8,6 +8,7 @@ HARP.assessment = (function () {
   // own holdings calculators — concentration + embedded-gains were retired (see run() below).
   var CATEGORIES = [
     { key: 'investments', label: 'Investments', match: ['Investment risk alignment', 'Investment quality', 'Investment cost', 'Investment performance', 'Investment income'] },
+    { key: 'retirement',  label: 'Retirement',  match: ['Retirement'] },
     { key: 'insurance',   label: 'Insurance',   match: ['Insurance'] },
     { key: 'tax',         label: 'Tax',         match: ['Tax diversification', 'Accounting / tax'] },
     { key: 'legal',       label: 'Legal',       match: ['Legal / estate'] }
@@ -19,6 +20,7 @@ HARP.assessment = (function () {
     var accounting = HARP.accounting.analyze(profile, cfg);
     var concentration = HARP.concentration.analyze(profile.holdings || [], cfg);  // still computed for the report's portfolio-value line; its findings are NOT surfaced (retired)
     var risk = HARP.risk.analyze(profile, cfg);   // Nitrogen risk-alignment + Riskalyze quality/cost signals — the Investments story
+    var retirement = HARP.retirement.analyze(profile, cfg);   // retirement readiness projection (from allocation + age + withdrawal)
     var gains = HARP.gains.analyze(profile.holdings || [], cfg);
     var performance = HARP.performance.analyze(profile, cfg);
     var income = HARP.income.analyze(profile, cfg);
@@ -29,7 +31,7 @@ HARP.assessment = (function () {
     // Investments findings come from the Riskalyze-driven risk module only. concentration + embedded-gains
     // (HARP's own holdings calculators) are intentionally EXCLUDED — the portfolio is Riskalyze's job now.
     var findings = [].concat(
-      accounting.findings, risk.findings, performance.findings, income.findings, insurance.findings, tax.findings, legal.findings
+      accounting.findings, risk.findings, retirement.findings, performance.findings, income.findings, insurance.findings, tax.findings, legal.findings
     );
 
     var counts = countSeverities(findings);
@@ -39,6 +41,7 @@ HARP.assessment = (function () {
       accounting: accounting,
       concentration: concentration,
       risk: risk,
+      retirement: retirement,
       gains: gains,
       performance: performance,
       income: income,

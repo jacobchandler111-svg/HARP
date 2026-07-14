@@ -69,6 +69,20 @@ HARP.config = {
   // Assumed retirement age — used to derive remaining working years from the client's age (insurance).
   retirementAge: 65,
 
+  // Long-run NOMINAL return assumptions by asset class (%/yr). Used to estimate a portfolio's expected
+  // return from its Riskalyze allocation, which drives the retirement projection. Deliberate starting points.
+  assetClassReturns: { stocks: 7.0, bonds: 3.0, cash: 1.0, other: 5.0 },
+
+  // Retirement readiness — a TRANSPARENT deterministic projection (grow to retirement, then draw an
+  // inflation-adjusted need through longevity). Not a Monte Carlo; a real probability would come from
+  // Riskalyze's Retirement Maps if/when that scrape is wired.
+  retirement: {
+    longevityAge: 92,        // plan the money to last through this age
+    inflationPct: 2.5,       // withdrawals grow with inflation each year
+    shortfallModerateYears: 5,   // runs out within this many years of longevity => moderate; sooner => critical
+    riskReturn: { base: 2.0, span: 8.0 }  // fallback expected return when no allocation: base + (Risk#/99)*span
+  },
+
   // Income goal: how far portfolio income can fall below the withdrawal need before it's critical.
   income: { criticalShortfallPct: 25 },
 
@@ -135,6 +149,7 @@ HARP.config = {
   // 1 moderate ~90. Tax (gentler): 1 critical => 60, 2 => 45; 1 moderate => 85.
   categoryScoreScheme: {
     investments: { firstCritical: 30, addlCritical: 20, firstModerate: 10, addlModerate: 8 },
+    retirement:  { firstCritical: 45, addlCritical: 20, firstModerate: 20, addlModerate: 10 },
     legal:       { firstCritical: 33, addlCritical: 23, firstModerate: 10, addlModerate: 8 },
     tax:         { firstCritical: 40, addlCritical: 15, firstModerate: 15, addlModerate: 8 }
   }

@@ -9,7 +9,7 @@ global.document = {
 };
 global.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
 const FILES = ['js/config.js', 'js/util.js', 'js/data/sectors.js',
-  'js/engine/accounting.js', 'js/engine/concentration.js', 'js/engine/risk.js', 'js/engine/nitrogen.js',
+  'js/engine/accounting.js', 'js/engine/concentration.js', 'js/engine/risk.js', 'js/engine/retirement.js', 'js/engine/nitrogen.js',
   'js/engine/performance.js', 'js/engine/income.js', 'js/engine/gains.js', 'js/engine/insurance.js',
   'js/engine/tax.js', 'js/engine/legal.js', 'js/engine/assessment.js'];
 for (const f of FILES) {

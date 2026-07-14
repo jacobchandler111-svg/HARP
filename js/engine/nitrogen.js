@@ -152,8 +152,15 @@ HARP.nitrogen = (function () {
       rangeLowPct: numOrBlank(range.low),
       rangeHighPct: numOrBlank(range.high),
       gpa: pf.riskalyze_gpa != null ? gpaLetter(pf.riskalyze_gpa) : '',
-      expenseRatio: numOrBlank(pf.expense_ratio_pct),      // Riskalyze cost signal (blank when not reported)
-      annualDividendPct: numOrBlank(pf.annual_dividend_pct) // Riskalyze blended portfolio dividend yield -> income
+      expenseRatio: numOrBlank(pf.expense_ratio_pct),       // Riskalyze cost signal (blank when not reported)
+      annualDividendPct: numOrBlank(pf.annual_dividend_pct), // Riskalyze blended portfolio dividend yield -> income
+      // Riskalyze asset allocation (%) — shown in the report + drives the retirement expected-return estimate.
+      allocation: (pf.allocation_pct && typeof pf.allocation_pct === 'object') ? {
+        stocks: numOrNull(pf.allocation_pct.stocks) || 0,
+        bonds: numOrNull(pf.allocation_pct.bonds) || 0,
+        cash: numOrNull(pf.allocation_pct.cash) || 0,
+        other: numOrNull(pf.allocation_pct.other) || 0
+      } : null
     };
     // holdings must be an array of objects; a malformed handoff (holdings as {}/string, or a null/scalar
     // entry) is coerced away instead of throwing.

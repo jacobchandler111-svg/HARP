@@ -155,7 +155,9 @@ HARP.ui.forms = (function () {
           '<input type="text" inputmode="decimal" class="dollar" id="risk-rangeLowAmt" placeholder="0" /></label>' +
         '<label>Upside ($)' +
           '<input type="text" inputmode="decimal" class="dollar" id="risk-rangeHighAmt" placeholder="0" /></label>' +
-      '</div>';
+      '</div>' +
+      // Riskalyze asset allocation carried as JSON (object, not a scalar field) — set by the handoff ingest.
+      '<input type="hidden" id="risk-allocation" />';
   }
   function readRisk() {
     return {
@@ -163,6 +165,7 @@ HARP.ui.forms = (function () {
       portfolioNumber: numOrBlank('risk-portfolio'),
       expenseRatio: numOrBlank('risk-expense'),
       annualDividendPct: numOrBlank('risk-dividend'),
+      allocation: (function () { try { var v = val('risk-allocation'); return v ? JSON.parse(v) : null; } catch (e) { return null; } })(),
       timeHorizonYears: numOrBlank('risk-horizon'),
       gpa: val('risk-gpa'),
       rangeLowPct: numOrBlank('risk-rangeLowPct'),
@@ -206,6 +209,9 @@ HARP.ui.forms = (function () {
         setVal(RISK_FIELD_IDS[k], found[k]);
       }
     });
+    // allocation is an object -> carried as JSON in a hidden field (outside the scalar RISK_FIELD_IDS loop).
+    if (replace) setVal('risk-allocation', found.allocation ? JSON.stringify(found.allocation) : '');
+    else if (found.allocation) setVal('risk-allocation', JSON.stringify(found.allocation));
     formatDollarInputs();
     updatePortfolioTotal();
     save();
