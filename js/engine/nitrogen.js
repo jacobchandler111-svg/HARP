@@ -188,8 +188,25 @@ HARP.nitrogen = (function () {
     };
   }
 
+  // A tax handoff from the TAX lane (Seth Weiland's calculator) — Nitrogen doesn't assess tax health.
+  // Accepts either our standardized handoff shape (o.sections.tax) or a flat tax object, and extracts the
+  // fields HARP's tax/accounting engines use. The exact mapping is finalized once the calculator's output
+  // format is known; the flexible key-matching below is the seam that adapts to it.
+  function fromTaxHandoff(o) {
+    o = o || {};
+    var t = (o.sections && o.sections.tax) || o.tax || o;
+    var pick = function (a, b) { return a != null ? a : b; };
+    return {
+      filingStatus: t.filing_status || t.filingStatus || '',
+      income: numOrBlank(pick(t.gross_income, t.income)),
+      agi: numOrBlank(t.agi),
+      totalTax: numOrBlank(pick(t.total_tax, t.totalTax)),
+      dependents: numOrBlank(t.dependents)
+    };
+  }
+
   return {
     extract: extract, parseCsv: parseCsv, fromText: fromText, fromRows: fromRows,
-    isHandoff: isHandoff, fromHandoff: fromHandoff
+    isHandoff: isHandoff, fromHandoff: fromHandoff, fromTaxHandoff: fromTaxHandoff
   };
 })();

@@ -14,14 +14,12 @@ HARP.ui.ingest = (function () {
     timeHorizonYears: 'Time horizon', gpa: 'GPA', expenseRatio: 'Expense ratio'
   };
 
-  function init(root) {
-    root = root || document;
-    var dz = root.querySelector('.dropzone[data-ingest="nitrogen"]');
-    if (!dz) return;
+  // Wire a dropzone's browse/change/drag/drop to a handler(dz, file).
+  function wire(dz, handler) {
     var input = dz.querySelector('.dz-input');
     var browse = dz.querySelector('.dz-browse');
     if (browse && input) browse.addEventListener('click', function () { input.click(); });
-    if (input) input.addEventListener('change', function () { if (input.files[0]) handle(dz, input.files[0]); input.value = ''; });
+    if (input) input.addEventListener('change', function () { if (input.files[0]) handler(dz, input.files[0]); input.value = ''; });
     ['dragenter', 'dragover'].forEach(function (ev) {
       dz.addEventListener(ev, function (e) { e.preventDefault(); dz.classList.add('drag'); });
     });
@@ -30,8 +28,15 @@ HARP.ui.ingest = (function () {
     });
     dz.addEventListener('drop', function (e) {
       var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-      if (f) handle(dz, f);
+      if (f) handler(dz, f);
     });
+  }
+  function init(root) {
+    root = root || document;
+    var nz = root.querySelector('.dropzone[data-ingest="nitrogen"]');
+    if (nz) wire(nz, handle);                    // section 1 — Nitrogen investments handoff
+    var tz = root.querySelector('.dropzone[data-ingest="tax"]');
+    if (tz) wire(tz, handleTax);                 // section 2 — tax-calculator handoff
   }
 
   function ext(name) { var m = String(name).toLowerCase().match(/\.([a-z0-9]+)$/); return m ? m[1] : ''; }
@@ -52,6 +57,29 @@ HARP.ui.ingest = (function () {
       'statement is processed in Nitrogen — drop the handoff.json here, or enter the numbers manually below.', 'warn');
   }
 
+  // Section 2 — the tax-calculator handoff (Seth Weiland's lane). Fills filing status / gross income / AGI.
+  function handleTax(dz, file) {
+    if (ext(file.name) !== 'json') {
+      status(dz, 'The tax lane hands off a <b>.json</b> file — drop that here, or enter the numbers manually below.', 'warn');
+      return;
+    }
+    status(dz, 'Reading “' + file.name + '”…', 'busy');
+    readText(file)
+      .then(function (t) { applyTax(dz, file, JSON.parse(t)); })
+      .catch(function (err) { status(dz, 'Couldn’t read “' + file.name + '” (' + ((err && err.message) || err) + ').', 'warn'); });
+  }
+  function applyTax(dz, file, obj) {
+    var t = HARP.nitrogen.fromTaxHandoff(obj);
+    HARP.ui.forms.fillTax(t);
+    var got = [];
+    if (t.filingStatus) got.push('filing status');
+    if (t.income !== '' && t.income != null) got.push('gross income');
+    if (t.agi !== '' && t.agi != null) got.push('AGI');
+    status(dz, got.length
+      ? 'Tax lane: filled ' + got.join(', ') + '. Verify below.'
+      : 'Read “' + file.name + '” but found no tax fields — enter them manually below.', got.length ? 'ok' : 'warn');
+  }
+
   // The standardized Nitrogen handoff.json: fill the holdings table AND the Risk Numbers directly
   // (exact values from the pipeline, not heuristically scraped). Investments recalibrate off these.
   function applyHandoff(dz, file, obj) {
@@ -63,7 +91,7 @@ HARP.ui.ingest = (function () {
     var nH = (h.holdings || []).length;
     if (nH) HARP.ui.forms.fillHoldings(h.holdings);
     HARP.ui.forms.fillRisk(h.risk, { replace: true });   // handoff is authoritative — clears stale numbers between clients
-    if (h.tax) HARP.ui.forms.fillTax(h.tax);   // ingest-driven tax (from the Nitrogen snapshot)
+    if (h.tax) HARP.ui.forms.fillTax(h.tax);   // tax only if a merged handoff carries it (Nitrogen itself doesn't assess tax — that's the tax lane in section 2)
     var riskGot = Object.keys(FIELD_LABELS)
       .filter(function (k) { return h.risk[k] != null && h.risk[k] !== ''; })
       .map(function (k) { return FIELD_LABELS[k] + ' ' + h.risk[k]; });

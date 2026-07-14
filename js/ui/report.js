@@ -137,8 +137,9 @@ HARP.ui.report = (function () {
                    (a.risk && a.risk.provided) ||
                    (a.performance && a.performance.provided) ||
                    (a.concentration && a.concentration.total > 0)),
-      tax: !!((a.tax && a.tax.total > 0) || (Number(p.income) || 0) > 0 ||
-           (Number(p.agi) || 0) > 0 || (Number(p.totalTax) || 0) > 0),
+      // Tax is assessed only once real tax data is in (from the tax-calculator lane, or manual) — holdings
+      // alone (which give the tax-buckets) shouldn't score the dial, or an empty tax section reads as 100.
+      tax: !!((Number(p.income) || 0) > 0 || (Number(p.agi) || 0) > 0 || (p.filingStatus && p.filingStatus !== '')),
       // The insurance Yes/No always carries a definite answer (the toggle defaults to "No"), and
       // "no insurance" is a real, scored state (15). So a definite Yes or No counts as assessed and is
       // included in the overall — not shown as "information needed" and dropped from the average.

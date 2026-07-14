@@ -57,14 +57,21 @@
           </div>
         </section>
 
-        <!-- 2 · 1040 / accounting statement -->
+        <!-- 2 · Tax health — sourced from the tax calculator (Seth Weiland's), not Nitrogen. Same
+             handoff-drop pattern as section 1: drop the tax lane's handoff to fill the fields. -->
         <section class="accordion-item" data-section="accounting">
           <button type="button" class="accordion-header" aria-expanded="true">
             <span class="chev" aria-hidden="true">▾</span>
-            <span class="acc-title">2 · Tax return</span>
+            <span class="acc-title">2 · Tax health (tax calculator)</span>
           </button>
           <div class="accordion-body">
-            <p class="hint">Ingest-driven: auto-filled from the Nitrogen tax snapshot when you drop the handoff in section 1. Verify or adjust below until the tax lane populates these automatically.</p>
+            <div class="dropzone" data-ingest="tax">
+              <input type="file" class="dz-input" accept=".json" hidden />
+              <p class="dz-text">Drag &amp; drop the <b>tax handoff</b> from the tax calculator here, or
+                <button type="button" class="link-btn dz-browse">browse</button></p>
+              <p class="dz-note">Fills filing status, gross income, and AGI from the tax lane (Nitrogen doesn't assess tax). Or enter manually below.</p>
+              <ul class="dz-files"></ul>
+            </div>
             <div class="grid">
               <label>Filing status
                 <select id="filingStatus">
