@@ -105,7 +105,7 @@ HARP.ui.report = (function () {
   function scores(a, cats, filled, overall) {
     var catHtml = cats.map(function (c) {
       var ok = filled[c.key];
-      return '<div class="op-cat">' + gauge(ok ? c.score : null, 120, c.label, !ok) +
+      return '<div class="op-cat">' + gauge(ok ? c.score : null, 106, c.label, !ok) +
         '<div class="op-cat-label">' + esc(c.label) + '</div></div>';
     }).join('');
     return '<div class="op-scores">' +
@@ -143,7 +143,8 @@ HARP.ui.report = (function () {
       // "no insurance" is a real, scored state (15). So a definite Yes or No counts as assessed and is
       // included in the overall — not shown as "information needed" and dropped from the average.
       insurance: typeof ins.hasPolicies === 'boolean' || (Number(ins.totalFaceValue) || 0) > 0,
-      legal: !!(p.legal && Object.keys(p.legal).some(function (k) { return p.legal[k]; }))
+      legal: !!(p.legal && Object.keys(p.legal).some(function (k) { return p.legal[k]; })),
+      retirement: !!(a.retirement && a.retirement.provided)
     };
   }
 
@@ -328,11 +329,53 @@ HARP.ui.report = (function () {
       '</div>';
   }
 
+  // The signature visual: where the client falls on Conservative -> Aggressive, tolerance vs portfolio.
+  function alignmentBand(a) {
+    var r = a.risk || {};
+    if (!r.provided) return '';
+    var name = esc(a.profile.name) || 'This client';
+    var tol = r.toleranceNumber, port = r.portfolioNumber, gap = Math.abs(port - tol);
+    var pos = function (n) { return Math.max(1.5, Math.min(98.5, ((n - 1) / 98) * 100)); };
+    var verdict = r.aligned
+      ? 'Aligned — the portfolio’s risk matches the client’s tolerance (within ' + gap + ' point' + (gap === 1 ? '' : 's') + ').'
+      : 'The portfolio is <strong>' + esc(r.portfolioBand) + '</strong> (' + port + '), ' + gap + ' points ' +
+        (port > tol ? 'hotter' : 'cooler') + ' than the client’s <strong>' + esc(r.toleranceBand) + '</strong> tolerance (' + tol + ').';
+    return '<div class="op-align ' + (r.aligned ? 'aligned' : 'misaligned') + '">' +
+      '<h3 class="op-align-h">Where ' + name + ' falls</h3>' +
+      '<div class="op-spectrum">' +
+        '<div class="op-spec-mark tol" style="left:' + pos(tol).toFixed(1) + '%"><span class="lbl">Tolerance ' + tol + '</span><span class="tick"></span></div>' +
+        '<div class="op-spec-bar"></div>' +
+        '<div class="op-spec-mark port" style="left:' + pos(port).toFixed(1) + '%"><span class="tick"></span><span class="lbl">Portfolio ' + port + '</span></div>' +
+        '<div class="op-spec-zones"><span>Conservative</span><span>Moderate</span><span>Aggressive</span></div>' +
+      '</div>' +
+      '<p class="op-align-verdict">' + verdict + '</p>' +
+      '</div>';
+  }
+
+  // Riskalyze asset allocation as a compact stacked bar.
+  function allocationBand(a) {
+    var al = ((a.profile || {}).risk || {}).allocation;   // allocation lives on the profile input, not the risk result
+    if (!al) return '';
+    var parts = [
+      { label: 'Stocks', v: Number(al.stocks) || 0, c: '#14415f' },
+      { label: 'Bonds', v: Number(al.bonds) || 0, c: '#4c8fbf' },
+      { label: 'Other', v: Number(al.other) || 0, c: '#8bb2cf' },
+      { label: 'Cash', v: Number(al.cash) || 0, c: '#cfe0ec' }
+    ].filter(function (p) { return p.v >= 0.5; });   // drop slivers that would render as "0%"
+    var tot = parts.reduce(function (s, p) { return s + p.v; }, 0);
+    if (tot <= 0) return '';
+    var seg = parts.map(function (p) { return '<span class="op-alloc-seg" style="width:' + (p.v / tot * 100).toFixed(1) + '%;background:' + p.c + '"></span>'; }).join('');
+    var legend = parts.map(function (p) { return '<span class="op-alloc-key"><span class="sw" style="background:' + p.c + '"></span>' + esc(p.label) + ' ' + Math.round(p.v) + '%</span>'; }).join('');
+    return '<div class="op-alloc"><div class="op-alloc-h">Asset allocation <span class="op-alloc-src">from Riskalyze</span></div>' +
+      '<div class="op-alloc-bar">' + seg + '</div>' +
+      '<div class="op-alloc-legend">' + legend + '</div></div>';
+  }
+
   function render(a) {
     var filled = filledByCategory(a);
     var byKey = {};
     a.categories.forEach(function (c) { byKey[c.key] = c; });
-    var cats = ['investments', 'tax', 'legal', 'insurance'].map(function (k) { return byKey[k]; }).filter(Boolean);
+    var cats = ['investments', 'retirement', 'tax', 'legal', 'insurance'].map(function (k) { return byKey[k]; }).filter(Boolean);
     var completed = cats.filter(function (c) { return filled[c.key]; }).map(function (c) { return c.score; });
     var overall = completed.length ? Math.round(completed.reduce(function (s, v) { return s + v; }, 0) / completed.length) : null;
 
@@ -346,7 +389,9 @@ HARP.ui.report = (function () {
       '<table class="op-sheet">' +
       '<thead class="op-head"><tr><td>' + header(a) + '</td></tr></thead>' +
       '<tbody class="op-body"><tr><td>' +
+        alignmentBand(a) +
         scores(a, cats, filled, overall) +
+        allocationBand(a) +
         keyRisks(a, filled) +
         recommendations(a, filled) +
       '</td></tr></tbody>' +

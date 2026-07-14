@@ -62,10 +62,12 @@ HARP.retirement = (function () {
 
     var modYears = Number(rcfg.shortfallModerateYears) || 5;
     if (result.funded) {
+      var reach = lastsTo >= 100 ? 'well beyond the plan horizon of age ' + longevity
+                                 : 'through age ' + lastsTo + ', at or beyond the plan horizon of ' + longevity;
       result.findings.push({
         category: 'Retirement', severity: 'ok', title: 'On track to fund retirement',
-        detail: 'The portfolio is projected to sustain the inflation-adjusted withdrawal through age ' + lastsTo +
-          ' — at or beyond the plan horizon of ' + longevity + ', assuming about ' + result.expectedReturnPct + '%/yr.'
+        detail: 'The portfolio is projected to sustain the inflation-adjusted withdrawal ' + reach +
+          ', assuming about ' + result.expectedReturnPct + '%/yr.'
       });
     } else {
       var shortBy = longevity - lastsTo;

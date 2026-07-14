@@ -131,8 +131,36 @@ button:hover { filter: brightness(0.97); }
 
 .op-figures { font-family: var(--font-mono); font-size: 12px; color: var(--ink); background: #eef4fc; border-radius: 8px; padding: 9px 13px; margin-bottom: 16px; }
 
+/* Risk-alignment spectrum — the "where they fall" hero visual */
+.op-align { margin: 4px 0 22px; padding: 16px 18px 14px; border: 1px solid var(--line); border-radius: 12px; background: #f7fafd; }
+.op-align.misaligned { border-left: 4px solid #c9832b; }
+.op-align.aligned { border-left: 4px solid #3f9c6d; }
+.op-align-h { font-family: var(--font-display); font-size: 15px; color: var(--brand-ink); margin: 0 0 34px; }
+.op-spectrum { position: relative; height: 14px; margin: 0 10px 44px; }
+.op-spec-bar { position: absolute; inset: 0; border-radius: 7px; background: linear-gradient(90deg, #aacce6, #4c8fbf 50%, #14415f); }
+.op-spec-zones { position: absolute; left: 0; right: 0; top: 30px; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.op-spec-mark { position: absolute; top: -5px; height: 24px; width: 0; transform: translateX(-50%); }
+.op-spec-mark .tick { display: block; width: 2px; height: 100%; margin: 0 auto; border-radius: 2px; box-shadow: 0 0 0 1.5px #fff; }
+.op-spec-mark .lbl { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 10px; font-weight: 700; }
+.op-spec-mark.tol .lbl { bottom: 100%; margin-bottom: 6px; color: #0e2f45; }
+.op-spec-mark.tol .tick { background: #0e2f45; }
+.op-spec-mark.port .lbl { top: 100%; margin-top: 8px; color: #b4611c; }
+.op-spec-mark.port .tick { background: #b4611c; }
+.op-align-verdict { margin: 0; font-size: 13px; color: var(--ink); line-height: 1.5; }
+.op-align-verdict strong { color: var(--brand-ink); }
+
+/* Asset allocation stacked bar */
+.op-alloc { margin: 2px 0 18px; }
+.op-alloc-h { font-family: var(--font-display); font-size: 14px; color: var(--brand-ink); margin-bottom: 8px; }
+.op-alloc-src { font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 400; margin-left: 4px; }
+.op-alloc-bar { display: flex; height: 16px; border-radius: 8px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,.04); }
+.op-alloc-seg { display: block; height: 100%; }
+.op-alloc-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 9px; }
+.op-alloc-key { display: inline-flex; align-items: center; font-size: 11.5px; color: var(--ink); }
+.op-alloc-key .sw { width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; }
+
 .op-scores { margin-bottom: 18px; }
-.op-cats { display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-around; margin-bottom: 16px; }
+.op-cats { display: flex; gap: 10px; flex-wrap: wrap; justify-content: space-around; margin-bottom: 16px; }
 .op-cat { text-align: center; }
 .op-cat-label { font-family: var(--font-mono); font-size: 11px; color: var(--brand-ink); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-top: 6px; }
 .op-overall-row { display: flex; align-items: center; gap: 24px; border-top: 1px solid var(--line); padding-top: 14px; }
