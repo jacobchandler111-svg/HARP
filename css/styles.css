@@ -149,6 +149,12 @@ button:hover { filter: brightness(0.97); }
 .op-align-verdict { margin: 0; font-size: 13px; color: var(--ink); line-height: 1.5; }
 .op-align-verdict strong { color: var(--brand-ink); }
 
+/* Riskalyze data-point snapshot tiles */
+.op-snap { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 22px; }
+.op-snap-tile { flex: 1 1 0; min-width: 88px; background: #f4f8fd; border: 1px solid var(--line); border-radius: 10px; padding: 11px 10px; text-align: center; }
+.op-snap-v { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--brand-ink); line-height: 1.1; white-space: nowrap; }
+.op-snap-l { font-family: var(--font-mono); font-size: 8.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-top: 5px; }
+
 /* Asset allocation stacked bar */
 .op-alloc { margin: 2px 0 18px; }
 .op-alloc-h { font-family: var(--font-display); font-size: 14px; color: var(--brand-ink); margin-bottom: 8px; }

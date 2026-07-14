@@ -352,6 +352,25 @@ HARP.ui.report = (function () {
       '</div>';
   }
 
+  // A clean strip of the actual Riskalyze data points driving the assessment — makes the third-party
+  // grounding explicit and gives the report a dashboard feel.
+  function snapshotStrip(a) {
+    var pr = (a.profile || {}).risk || {}, ret = a.retirement || {}, tiles = [];
+    var val = Number(a.profile.portfolioValue) || 0;
+    if (val > 0) tiles.push(['Portfolio value', money(val)]);
+    if (pr.portfolioNumber !== '' && pr.portfolioNumber != null) tiles.push(['Portfolio Risk #', String(pr.portfolioNumber)]);
+    if (pr.gpa) tiles.push(['Riskalyze GPA', String(pr.gpa)]);
+    if (pr.annualDividendPct !== '' && pr.annualDividendPct != null) tiles.push(['Dividend yield', pr.annualDividendPct + '%']);
+    if (pr.expenseRatio !== '' && pr.expenseRatio != null) tiles.push(['Expense ratio', pr.expenseRatio + '%']);
+    if (pr.rangeLowPct !== '' && pr.rangeLowPct != null && pr.rangeHighPct !== '' && pr.rangeHighPct != null)
+      tiles.push(['6-mo 95% range', Math.round(pr.rangeLowPct) + '% / +' + Math.round(pr.rangeHighPct) + '%']);
+    if (ret.provided && ret.expectedReturnPct != null) tiles.push(['Est. return', '~' + ret.expectedReturnPct + '%/yr']);
+    if (tiles.length < 2) return '';
+    return '<div class="op-snap">' + tiles.map(function (t) {
+      return '<div class="op-snap-tile"><div class="op-snap-v">' + esc(t[1]) + '</div><div class="op-snap-l">' + esc(t[0]) + '</div></div>';
+    }).join('') + '</div>';
+  }
+
   // Riskalyze asset allocation as a compact stacked bar.
   function allocationBand(a) {
     var al = ((a.profile || {}).risk || {}).allocation;   // allocation lives on the profile input, not the risk result
@@ -390,6 +409,7 @@ HARP.ui.report = (function () {
       '<thead class="op-head"><tr><td>' + header(a) + '</td></tr></thead>' +
       '<tbody class="op-body"><tr><td>' +
         alignmentBand(a) +
+        snapshotStrip(a) +
         scores(a, cats, filled, overall) +
         allocationBand(a) +
         keyRisks(a, filled) +
