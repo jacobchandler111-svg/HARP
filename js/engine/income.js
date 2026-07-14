@@ -17,11 +17,15 @@ HARP.income = (function () {
     var fixedIncomeIncome = Number(profile.fixedIncomeIncome) || 0;
     var monthlyDraw = Number(profile.monthlyDrawdown) || 0;
 
-    // Stock dividends are backed into from each holding's own yield: sum(value x yield%).
-    var stockDividends = holdings.reduce(function (s, h) {
-      return s + (Number(h.value) || 0) * ((Number(h.dividendYield) || 0) / 100);
-    }, 0);
-    var annualIncome = stockDividends + fixedIncomeIncome;
+    // Income basis: prefer Riskalyze's BLENDED portfolio dividend yield (whole-portfolio %), which already
+    // folds in bond interest — the per-holding yields usually arrive blank. Fall back to per-holding
+    // dividends + any manual fixed-income figure.
+    var annDivPct = Number((profile.risk || {}).annualDividendPct);
+    var usePortfolioYield = isFinite(annDivPct) && annDivPct > 0;
+    var stockDividends = usePortfolioYield
+      ? portfolio * (annDivPct / 100)
+      : holdings.reduce(function (s, h) { return s + (Number(h.value) || 0) * ((Number(h.dividendYield) || 0) / 100); }, 0);
+    var annualIncome = stockDividends + (usePortfolioYield ? 0 : fixedIncomeIncome);
     var annualDraw = monthlyDraw * 12;
     var net = annualIncome - annualDraw;
 
@@ -33,6 +37,9 @@ HARP.income = (function () {
     // draw from the account. A shortfall is a moderate concern up to criticalShortfallPct below the need,
     // and a critical concern beyond that.
     var critPct = Number((cfg.income || {}).criticalShortfallPct) || 25;
+    var incomeSrc = usePortfolioYield
+      ? '(Riskalyze blended dividend yield ' + annDivPct + '%)'
+      : '(dividends ' + m(stockDividends) + ' + fixed income ' + m(fixedIncomeIncome) + ')';
     if (annualDraw > 0) {
       if (net < 0) {
         var shortfallPct = Math.round((-net / annualDraw) * 100);
@@ -40,8 +47,8 @@ HARP.income = (function () {
         findings.push({
           category: 'Investment income', severity: critical ? 'risk' : 'warn',
           title: 'Portfolio income falls short of withdrawals',
-          detail: 'Estimated portfolio income of ' + m(annualIncome) + '/yr (dividends ' + m(stockDividends) +
-            ' + fixed income ' + m(fixedIncomeIncome) + ') does not cover planned withdrawals of ' + m(annualDraw) +
+          detail: 'Estimated portfolio income of ' + m(annualIncome) + '/yr ' + incomeSrc +
+            ' does not cover planned withdrawals of ' + m(annualDraw) +
             '/yr — a shortfall of about ' + m(-net) + '/yr (' + m(monthlyDraw) + '/mo), ' + shortfallPct +
             '% below the need. This gap needs to be addressed: drawing down principal, adjusting spending, or ' +
             'repositioning the portfolio for more income.'

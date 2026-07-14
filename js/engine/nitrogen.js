@@ -152,7 +152,8 @@ HARP.nitrogen = (function () {
       rangeLowPct: numOrBlank(range.low),
       rangeHighPct: numOrBlank(range.high),
       gpa: pf.riskalyze_gpa != null ? gpaLetter(pf.riskalyze_gpa) : '',
-      expenseRatio: numOrBlank(pf.expense_ratio_pct)   // Riskalyze cost signal (blank when not reported)
+      expenseRatio: numOrBlank(pf.expense_ratio_pct),      // Riskalyze cost signal (blank when not reported)
+      annualDividendPct: numOrBlank(pf.annual_dividend_pct) // Riskalyze blended portfolio dividend yield -> income
     };
     // holdings must be an array of objects; a malformed handoff (holdings as {}/string, or a null/scalar
     // entry) is coerced away instead of throwing.

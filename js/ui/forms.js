@@ -140,6 +140,8 @@ HARP.ui.forms = (function () {
           '</select></label>' +
         '<label>Expense ratio (%)' +
           '<span class="pct-field"><input type="number" step="0.01" id="risk-expense" placeholder="e.g. 0.35" /><span class="pct-suffix">%</span></span></label>' +
+        '<label>Dividend yield (%)' +
+          '<span class="pct-field"><input type="number" step="0.01" id="risk-dividend" placeholder="e.g. 1.8" /><span class="pct-suffix">%</span></span></label>' +
         '<label>Time horizon (years)' +
           '<input type="number" min="0" step="1" id="risk-horizon" placeholder="e.g. 20" /></label>' +
       '</div>' +
@@ -160,6 +162,7 @@ HARP.ui.forms = (function () {
       toleranceNumber: numOrBlank('risk-tolerance'),
       portfolioNumber: numOrBlank('risk-portfolio'),
       expenseRatio: numOrBlank('risk-expense'),
+      annualDividendPct: numOrBlank('risk-dividend'),
       timeHorizonYears: numOrBlank('risk-horizon'),
       gpa: val('risk-gpa'),
       rangeLowPct: numOrBlank('risk-rangeLowPct'),
@@ -182,7 +185,7 @@ HARP.ui.forms = (function () {
   // Keys match the profile.risk shape.
   var RISK_FIELD_IDS = {
     toleranceNumber: 'risk-tolerance', portfolioNumber: 'risk-portfolio', timeHorizonYears: 'risk-horizon',
-    gpa: 'risk-gpa', expenseRatio: 'risk-expense', rangeLowPct: 'risk-rangeLowPct', rangeHighPct: 'risk-rangeHighPct',
+    gpa: 'risk-gpa', expenseRatio: 'risk-expense', annualDividendPct: 'risk-dividend', rangeLowPct: 'risk-rangeLowPct', rangeHighPct: 'risk-rangeHighPct',
     rangeLowAmt: 'risk-rangeLowAmt', rangeHighAmt: 'risk-rangeHighAmt'
   };
   // Two modes, because two sources disagree on what a blank means:
@@ -261,8 +264,12 @@ HARP.ui.forms = (function () {
     var stocks = readHoldings().reduce(function (s, h) { return s + (Number(h.value) || 0); }, 0);
     return stocks + num('fixedIncomeValue');
   }
-  // Annual portfolio income = stock dividends (sum of value x per-holding yield%) + annual fixed income.
+  // Annual portfolio income. Prefer Riskalyze's blended portfolio dividend yield (whole-portfolio %),
+  // since the per-holding yields often come through the handoff blank; fall back to summing per-holding
+  // dividends + any manual fixed-income figure.
   function portfolioIncome() {
+    var annDivPct = numOrBlank('risk-dividend');
+    if (annDivPct !== '' && Number(annDivPct) > 0) return portfolioTotal() * (Number(annDivPct) / 100);
     var dividends = readHoldings().reduce(function (s, h) {
       return s + (Number(h.value) || 0) * ((Number(h.dividendYield) || 0) / 100);
     }, 0);
