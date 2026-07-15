@@ -140,6 +140,16 @@ HARP.nitrogen = (function () {
   // A Nitrogen Risk Number is an integer 1-99; round, and blank anything out of range or non-numeric
   // (mirrors the CSV/text path's valueFor, so a bad handoff can't feed 0/150/true into risk alignment).
   function riskNum(v) { var n = numOrNull(v); if (n == null) return ''; n = Math.round(n); return (n >= 1 && n <= 99) ? n : ''; }
+  // Normalize a filing status from any source (the tax calculator says "Married Filing Jointly") to HARP's
+  // exact <select> option text ("Married filing jointly"), so fillTax's setVal matches an option.
+  function normFiling(s) {
+    var v = String(s == null ? '' : s).toLowerCase();
+    if (v.indexOf('joint') >= 0) return 'Married filing jointly';
+    if (v.indexOf('separate') >= 0) return 'Married filing separately';
+    if (v.indexOf('head') >= 0) return 'Head of household';
+    if (v.indexOf('single') >= 0) return 'Single';
+    return s || '';
+  }
   function isHandoff(o) { return !!(o && o.schema_version && o.sections && o.sections.investments); }
   function fromHandoff(o) {
     var inv = (o.sections && o.sections.investments) || {}, pf = inv.portfolio || {};
@@ -177,7 +187,7 @@ HARP.nitrogen = (function () {
     });
     var tx = (o.sections && typeof o.sections.tax === 'object' && o.sections.tax) || {};
     var tax = {
-      filingStatus: tx.filing_status || '',
+      filingStatus: normFiling(tx.filing_status),
       income: numOrBlank(tx.gross_income),
       agi: numOrBlank(tx.agi)
     };
@@ -197,7 +207,7 @@ HARP.nitrogen = (function () {
     var t = (o.sections && o.sections.tax) || o.tax || o;
     var pick = function (a, b) { return a != null ? a : b; };
     return {
-      filingStatus: t.filing_status || t.filingStatus || '',
+      filingStatus: normFiling(t.filing_status || t.filingStatus),
       income: numOrBlank(pick(t.gross_income, t.income)),
       agi: numOrBlank(t.agi),
       totalTax: numOrBlank(pick(t.total_tax, t.totalTax)),
