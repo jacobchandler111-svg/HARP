@@ -178,6 +178,8 @@ button:hover { filter: brightness(0.97); }
 .op-tax-sub { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
 .op-tax-arrow { flex-shrink: 0; text-align: center; font-size: 12px; color: var(--muted); min-width: 78px; }
 .op-tax-save { display: inline-block; font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: #2f7d56; background: #e4f2ea; border-radius: 10px; padding: 3px 8px; line-height: 1.2; }
+.op-tax-note { margin: 10px 0 0; font-size: 12.5px; color: var(--ink); line-height: 1.5; }
+.op-tax-note strong { color: var(--brand-ink); }
 .op-tax-strats { margin-top: 12px; }
 .op-tax-strats-h { font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 5px; }
 .op-tax-strat { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px dotted var(--line); font-size: 12.5px; color: var(--ink); }

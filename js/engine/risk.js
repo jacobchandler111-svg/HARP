@@ -20,6 +20,34 @@ HARP.risk = (function () {
     return bands[bands.length - 1][1];
   }
 
+  // Investments CATEGORY score — calibrated so ALIGNMENT is the headline. A portfolio whose Risk Number sits
+  // on the client's tolerance is near-perfect (gap 1 -> ~98) and the score falls SMOOTHLY with the gap
+  // (gap 20 -> ~68, a real-but-moderate concern), not in coarse steps. The absolute Risk Number itself is
+  // NOT a penalty — a hot portfolio that matches a hot tolerance is fine; it's the in-line-ness that scores.
+  // Under-risk for a non-growth goal is softened (a defensible conservative choice). GPA (quality) and
+  // expense (cost) apply small supporting adjustments. Null unless both Risk Numbers are present.
+  function alignmentScore(r, profile, cfg) {
+    if (!r.provided) return null;
+    var rcfg = cfg.risk || {}, rz = cfg.riskalyze || {};
+    var maxGap = Number(rcfg.alignScoreMaxGap) || 50;
+    var span = Number(rcfg.alignScoreSpan) || 80;
+    var relief = Number(rcfg.underRiskGoalRelief) || 0.6;
+    var goal = (profile && profile.goal) || 'growth';
+    var penalty = Math.min(1, r.absGap / maxGap) * span;
+    if (r.direction === 'under' && goal !== 'growth') penalty *= relief;
+    var score = 100 - penalty;
+    if (r.gpa) {                                          // supporting: risk-adjusted quality
+      var g = r.gpa.charAt(0);
+      if ((rz.gpaCritical || []).indexOf(g) >= 0) score -= 12;
+      else if ((rz.gpaModerate || []).indexOf(g) >= 0) score -= 5;
+    }
+    if (r.expenseRatio != null) {                        // supporting: cost drag
+      if (r.expenseRatio >= Number(rz.expenseCriticalPct)) score -= 10;
+      else if (r.expenseRatio >= Number(rz.expenseModeratePct)) score -= 4;
+    }
+    return Math.max(0, Math.min(100, Math.round(score)));
+  }
+
   // A short " Nitrogen projects a 6-month 95% range of -X% to +Y%." clause when the range is present.
   function rangeText(r) {
     if (r.rangeLowPct == null || r.rangeHighPct == null) return '';
@@ -124,8 +152,12 @@ HARP.risk = (function () {
       }
     }
 
+    // Calibrated Investments category score (alignment-driven). assessment.js uses it as the dial override
+    // when both Risk Numbers are present; otherwise it's null and the generic scoring applies.
+    result.categoryScore = alignmentScore(result, profile, cfg);
+
     return result;
   }
 
-  return { analyze: analyze, band: band };
+  return { analyze: analyze, band: band, alignmentScore: alignmentScore };
 })();

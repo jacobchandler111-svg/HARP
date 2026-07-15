@@ -425,6 +425,12 @@ HARP.ui.report = (function () {
           '<div class="op-tax-fig">' + fig(aft) + '</div>' + ef(t.effectiveRateAfterPct) + '</div>' +
       '</div>';
     }
+    // Framing (the client-facing message): this is opportunity, not a problem — money on the table we help
+    // capture. Only when there's a meaningful amount to talk about.
+    var caption = sav > 0
+      ? '<p class="op-tax-note">This isn’t a tax-liability problem — it’s about <strong>' + money(sav) +
+        ' a year</strong> being left on the table that our planning strategies are built to help capture.</p>'
+      : '';
     // Interested strategies first, then by savings size.
     var strat = (t.strategies || []).slice().sort(function (x, y) {
       var rk = function (s) { return s.status === 'interested' ? 0 : 1; };
@@ -440,7 +446,7 @@ HARP.ui.report = (function () {
         }).join('') + '</div>'
       : '';
     return '<div class="op-tax"><h3 class="op-tax-h">Tax planning ' +
-      '<span class="op-tax-src">from the BrookHaven Tax Strategy Calculator</span></h3>' + ba + stratHtml + '</div>';
+      '<span class="op-tax-src">from the BrookHaven Tax Strategy Calculator</span></h3>' + ba + caption + stratHtml + '</div>';
   }
 
   function render(a) {

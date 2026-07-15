@@ -22,7 +22,8 @@ ok('normalizes filing status', timTax.filingStatus === 'Married filing jointly',
 
 const tim = HARP.tax.analyze({ taxPlan: timTax.plan });
 ok('Tim: hasPlan', tim.hasPlan === true);
-ok('Tim: big savings -> risk headline', tim.findings.some(f => f.severity === 'risk' && /unclaimed/.test(f.title)));
+ok('Tim: big savings -> risk headline', tim.findings.some(f => f.severity === 'risk' && /potential tax savings/.test(f.title)));
+ok('Tim: framed as opportunity, not fault', tim.findings.some(f => /money being left on the table/.test(f.detail) && /does not mean/.test(f.detail)));
 ok('Tim: marginal-bracket note', tim.findings.some(f => f.severity === 'info' && /marginal bracket/.test(f.title)));
 ok('Tim: low category score (overpaying)', tim.categoryScore < 50, 'score ' + tim.categoryScore);
 

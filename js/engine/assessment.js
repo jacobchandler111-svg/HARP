@@ -53,9 +53,9 @@ HARP.assessment = (function () {
       findings: findings,
       counts: counts,
       score: scoreFromFindings(findings, cfg),
-      // Insurance and Tax supply their category score directly (a rubric / savings-ratio), bypassing the
-      // generic finding-count scoring — only when they actually have data to assess.
-      categories: categoryScores(findings, cfg, taxOverride(tax, { insurance: insurance.categoryScore }))
+      // Investments / Tax / Insurance supply their category score directly (alignment / savings-ratio /
+      // rubric), bypassing the generic finding-count scoring — only when they actually have data to assess.
+      categories: categoryScores(findings, cfg, buildOverrides(risk, tax, insurance))
     };
   }
 
@@ -65,11 +65,16 @@ HARP.assessment = (function () {
     return counts;
   }
 
-  // Add the tax module's own category score to the overrides only when it has a plan to assess; without one
-  // the Tax dial stays "information needed" (gap-tolerant) instead of being scored on no data.
-  function taxOverride(tax, overrides) {
-    if (tax && tax.hasPlan && tax.categoryScore != null) overrides.tax = tax.categoryScore;
-    return overrides;
+  // Modules that compute their OWN category score supply it as a direct dial override (bypassing the generic
+  // finding-count scoring): Investments = the calibrated tolerance-vs-portfolio alignment score; Tax = the
+  // savings-opportunity score; Insurance = the (C,M) rubric. Each is added only when it actually has data,
+  // so an unscored section stays "information needed" (gap-tolerant) rather than being scored on nothing.
+  function buildOverrides(risk, tax, insurance) {
+    var o = {};
+    if (insurance && insurance.categoryScore != null) o.insurance = insurance.categoryScore;
+    if (tax && tax.hasPlan && tax.categoryScore != null) o.tax = tax.categoryScore;
+    if (risk && risk.provided && risk.categoryScore != null) o.investments = risk.categoryScore;
+    return o;
   }
 
   // `overrides` lets a module supply a category's score directly (e.g. insurance's (C,M) rubric), bypassing

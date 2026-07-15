@@ -46,15 +46,16 @@ HARP.tax = (function () {
       var sev = savingsRatio >= critBand ? 'risk' : savingsRatio >= modBand ? 'warn' : 'ok';
       findings.push({
         category: 'Tax planning', severity: sev,
-        title: money(savings) + '/yr in identified tax savings is currently unclaimed',
+        title: money(savings) + '/yr in potential tax savings identified',
         detail: 'The client is projected to pay ' + money(currentTax) +
           (effNow != null ? ' (' + pct(effNow) + ' effective rate)' : '') + ' in tax. The BrookHaven Tax ' +
-          'Strategy Calculator identifies ' + money(savings) + ' in annual savings' +
-          (afterTax != null ? ', bringing the projected tax to ' + money(afterTax) : '') +
-          (effAfter != null ? ' (' + pct(effAfter) + ' effective)' : '') + '. ' +
-          (sev === 'risk' ? 'A large share of the current tax bill is reducible — putting these strategies in place should be a priority.'
-           : sev === 'warn' ? 'A meaningful amount is reducible with the identified strategies.'
-           : 'The current tax plan is already fairly efficient; the remaining opportunity is modest.')
+          'Strategy Calculator identifies ' + money(savings) + ' in potential annual savings' +
+          (afterTax != null ? ', which would bring the projected tax to ' + money(afterTax) : '') +
+          (effAfter != null ? ' (' + pct(effAfter) + ' effective)' : '') + '. This does not mean the ' +
+          'client is in a tax-liability or problem situation — it is money being left on the table, and ' +
+          (sev === 'risk' ? 'a large amount of it: our planning strategies are built to help capture it, and it is well worth prioritizing.'
+           : sev === 'warn' ? 'a meaningful amount: our strategies can help capture it.'
+           : 'only a modest amount remains — the plan is already fairly efficient.')
       });
     } else if (currentTax != null) {
       findings.push({

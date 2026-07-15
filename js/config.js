@@ -59,6 +59,13 @@ HARP.config = {
     scaleMax: 99,        // Nitrogen Risk Number scale (1-99)
     alignedBand: 10,     // |portfolio - tolerance| within this => aligned (no concern)
     criticalGap: 20,     // a gap beyond this => critical; between alignedBand and this => moderate
+    // Investments CATEGORY score is a SMOOTH function of the alignment gap (|portfolio - tolerance|), not
+    // coarse finding-count steps: a portfolio sitting right on the client's tolerance is near-perfect and
+    // the score falls proportionally with the gap. Calibrated to intent: gap 1 => ~98 ("almost perfect"),
+    // gap 20 => ~68 (a real but moderate concern), gap 50 => ~20. score = 100 - min(1, gap/maxGap) * span.
+    alignScoreMaxGap: 50,   // the gap treated as "as misaligned as it gets" on the 1-99 scale
+    alignScoreSpan: 80,     // how many points a full-max gap removes from a perfect 100
+    underRiskGoalRelief: 0.6, // under-risk (portfolio tamer than tolerance) for a non-growth goal is softened
     // Risk Number -> plain band label (matches the intake questionnaire's bands).
     bands: [[33, 'Conservative'], [66, 'Moderate'], [99, 'Aggressive']]
   },
