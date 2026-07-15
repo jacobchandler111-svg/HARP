@@ -69,7 +69,7 @@
               <input type="file" class="dz-input" accept=".json" hidden />
               <p class="dz-text">Drag &amp; drop the <b>tax handoff</b> from the tax calculator here, or
                 <button type="button" class="link-btn dz-browse">browse</button></p>
-              <p class="dz-note">Fills filing status, gross income, and AGI from the tax lane (Nitrogen doesn't assess tax). Or enter manually below.</p>
+              <p class="dz-note">Fills the whole tax story from the BrookHaven Tax Strategy Calculator — filing status, income, projected tax, identified savings, and the strategies. Nitrogen doesn't assess tax; the calculator is the source. Or enter the basics manually below.</p>
               <ul class="dz-files"></ul>
             </div>
             <div class="grid">
@@ -84,6 +84,14 @@
               </label>
               <label>Annual gross income ($)<input type="text" inputmode="decimal" class="dollar" id="income" placeholder="0" /></label>
               <label>Annual adjusted gross income ($)<input type="text" inputmode="decimal" class="dollar" id="agi" placeholder="0" /></label>
+            </div>
+            <!-- Read-only echo of the calculator's figures (projected tax, savings, strategies), injected by forms.js. -->
+            <div class="tax-summary" id="tax-summary" hidden></div>
+            <!-- Carried from the tax lane, scored by js/engine/tax.js. Hidden so val()/num() resolve without UI. -->
+            <div hidden aria-hidden="true">
+              <input type="hidden" id="tax-plan" />
+              <input type="text" id="totalTax" />
+              <input type="text" id="dependents" />
             </div>
           </div>
         </section>

@@ -150,6 +150,42 @@ HARP.nitrogen = (function () {
     if (v.indexOf('single') >= 0) return 'Single';
     return s || '';
   }
+  // Build the full tax PLAN HARP scores on, from a tax-calculator tax section. Accepts the calculator's
+  // snake_case keys (or camelCase); every figure is coerced to a finite number or null (never a silent 0).
+  // This is the tax analog of the Nitrogen risk profile — HARP presents these numbers, it does not
+  // recompute them (the calculator is the source of truth, just as Nitrogen is for the portfolio).
+  function taxPlanFrom(t) {
+    t = t || {};
+    var pick = function (a, b) { return a != null ? a : b; };
+    var strategies = Array.isArray(t.strategies) ? t.strategies
+      .filter(function (s) { return s && typeof s === 'object' && !Array.isArray(s); })
+      .map(function (s) {
+        return { code: s.code || '', name: s.name || s.code || 'Strategy', category: s.category || '',
+                 netAnnualSavings: numOrNull(pick(s.net_annual_savings, s.netAnnualSavings)),
+                 status: String(s.status || '').toLowerCase() };
+      }) : [];
+    var currentTax = numOrNull(pick(t.current_projected_tax, pick(t.total_tax, t.totalTax)));
+    var afterTax = numOrNull(pick(t.tax_after_strategies, t.taxAfterStrategies));
+    var savings = numOrNull(pick(t.total_annual_savings, t.totalAnnualSavings));
+    if (savings == null && currentTax != null && afterTax != null) savings = Math.max(0, currentTax - afterTax);
+    return {
+      filingStatus: normFiling(t.filing_status || t.filingStatus),
+      state: t.state || '',
+      income: numOrNull(pick(t.gross_income, t.income)),
+      agi: numOrNull(t.agi),
+      taxableIncome: numOrNull(pick(t.taxable_income, t.taxableIncome)),
+      marginalPct: numOrNull(pick(t.marginal_bracket_pct, t.marginalBracketPct)),
+      effectiveRatePct: numOrNull(pick(t.effective_rate_pct, t.effectiveRatePct)),
+      effectiveRateAfterPct: numOrNull(pick(t.effective_rate_after_pct, t.effectiveRateAfterPct)),
+      currentTax: currentTax, afterTax: afterTax, savings: savings,
+      roiMultiple: numOrNull(pick(t.roi_multiple, t.roiMultiple)),
+      advisoryFee: numOrNull(pick(t.advisory_fee, t.advisoryFee)),
+      dependents: numOrNull(t.dependents),
+      strategies: strategies,
+      source: t.ingest_source || t.source || ''
+    };
+  }
+
   function isHandoff(o) { return !!(o && o.schema_version && o.sections && o.sections.investments); }
   function fromHandoff(o) {
     var inv = (o.sections && o.sections.investments) || {}, pf = inv.portfolio || {};
@@ -185,11 +221,17 @@ HARP.nitrogen = (function () {
         accountType: acctType(h.account_type || h.account)
       };
     });
-    var tx = (o.sections && typeof o.sections.tax === 'object' && o.sections.tax) || {};
+    // A merged handoff may carry the tax section too — read the FULL tax plan (not just filing/income/AGI)
+    // so a single dropped file lights up both the Investments and Tax stories. Absent tax section => plan null.
+    var hasTax = !!(o.sections && typeof o.sections.tax === 'object' && o.sections.tax);
+    var tp = hasTax ? taxPlanFrom(o.sections.tax) : null;
     var tax = {
-      filingStatus: normFiling(tx.filing_status),
-      income: numOrBlank(tx.gross_income),
-      agi: numOrBlank(tx.agi)
+      filingStatus: tp ? tp.filingStatus : '',
+      income: (tp && tp.income != null) ? tp.income : '',
+      agi: (tp && tp.agi != null) ? tp.agi : '',
+      totalTax: (tp && tp.currentTax != null) ? tp.currentTax : '',
+      dependents: (tp && tp.dependents != null) ? tp.dependents : '',
+      plan: tp
     };
     return {
       risk: risk, holdings: holdings, tax: tax,
@@ -205,13 +247,15 @@ HARP.nitrogen = (function () {
   function fromTaxHandoff(o) {
     o = o || {};
     var t = (o.sections && o.sections.tax) || o.tax || o;
-    var pick = function (a, b) { return a != null ? a : b; };
+    var plan = taxPlanFrom(t);
+    var blank = function (v) { return v == null ? '' : v; };
     return {
-      filingStatus: normFiling(t.filing_status || t.filingStatus),
-      income: numOrBlank(pick(t.gross_income, t.income)),
-      agi: numOrBlank(t.agi),
-      totalTax: numOrBlank(pick(t.total_tax, t.totalTax)),
-      dependents: numOrBlank(t.dependents)
+      filingStatus: plan.filingStatus,
+      income: blank(plan.income),
+      agi: blank(plan.agi),
+      totalTax: blank(plan.currentTax),
+      dependents: blank(plan.dependents),
+      plan: plan                                     // the full tax story HARP's tax engine scores on
     };
   }
 

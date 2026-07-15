@@ -5,6 +5,7 @@ HARP.ui = HARP.ui || {};
 
 HARP.ui.report = (function () {
   var esc = HARP.util.escape, money = HARP.util.money;
+  function pct(n) { return (Math.round(Number(n) * 10) / 10) + '%'; }
   var SEV_ORDER = { risk: 0, warn: 1, info: 2, ok: 3 };
   var SEV_LABEL = { risk: 'Critical', warn: 'Moderate', info: 'Note', ok: 'OK' };
 
@@ -97,7 +98,7 @@ HARP.ui.report = (function () {
     var bits = [];
     if (a.concentration.total > 0) bits.push('Portfolio ' + money(a.concentration.total));
     if (a.accounting.income > 0) bits.push('Income ' + money(a.accounting.income));
-    if (a.tax.total > 0) bits.push('Investable assets ' + money(a.tax.total));
+    if (a.tax && typeof a.tax.currentTax === 'number' && a.tax.currentTax > 0) bits.push('Projected tax ' + money(a.tax.currentTax));
     return bits.length ? '<div class="op-figures">' + bits.map(esc).join(' &nbsp;·&nbsp; ') + '</div>' : '';
   }
 
@@ -137,9 +138,9 @@ HARP.ui.report = (function () {
                    (a.risk && a.risk.provided) ||
                    (a.performance && a.performance.provided) ||
                    (a.concentration && a.concentration.total > 0)),
-      // Tax is assessed only once real tax data is in (from the tax-calculator lane, or manual) — holdings
-      // alone (which give the tax-buckets) shouldn't score the dial, or an empty tax section reads as 100.
-      tax: !!((Number(p.income) || 0) > 0 || (Number(p.agi) || 0) > 0 || (p.filingStatus && p.filingStatus !== '')),
+      // Tax is assessed once the tax-calculator plan is in (authoritative), or a manual income/AGI/filing is
+      // present. No data => the dial stays "information needed" rather than reading as a false 100.
+      tax: !!((a.tax && a.tax.hasPlan) || (Number(p.income) || 0) > 0 || (Number(p.agi) || 0) > 0 || (p.filingStatus && p.filingStatus !== '')),
       // The insurance Yes/No always carries a definite answer (the toggle defaults to "No"), and
       // "no insurance" is a real, scored state (15). So a definite Yes or No counts as assessed and is
       // included in the overall — not shown as "information needed" and dropped from the average.
@@ -265,10 +266,23 @@ HARP.ui.report = (function () {
              : 'strengthen your investment plan';
     return 'Speak with one of our advisors to ' + lead + (bits.length ? ' — ' + naturalJoin(bits) : '') + '.';
   }
-  function taxRec(fs) {
-    var standard = fs.some(function (f) { return /standard deduction/i.test(f.title); });
-    return 'Speak with our accounting team to put a more tax-efficient plan in place' +
-      (standard ? ' — at this income there are likely deductions and planning opportunities going unclaimed.' : '.');
+  function taxRec(fs, a) {
+    var t = (a && a.tax) || {};
+    var sav = Number(t.savings) || 0;
+    // Name the interested strategies (or the top ones) so the recommendation is concrete, not generic.
+    var names = (t.strategies || [])
+      .slice().sort(function (x, y) {
+        var rk = function (s) { return s.status === 'interested' ? 0 : 1; };
+        if (rk(x) !== rk(y)) return rk(x) - rk(y);
+        return (Number(y.netAnnualSavings) || 0) - (Number(x.netAnnualSavings) || 0);
+      })
+      .slice(0, 2).map(function (s) { return s.name; }).filter(Boolean);
+    if (sav > 0) {
+      return 'Speak with our tax team to put the identified strategies in place' +
+        (names.length ? ' — starting with ' + naturalJoin(names) : '') +
+        ' — capturing about ' + money(sav) + '/yr in tax savings.';
+    }
+    return 'Speak with our tax team to review the plan and confirm no further tax-efficiency opportunities are being missed.';
   }
   function legalRec(fs) {
     var missing = [], overdue = [];
@@ -306,7 +320,7 @@ HARP.ui.report = (function () {
     ];
     var body = areas.filter(function (b) { return g[b.key].length; }).map(function (b) {
       return '<div class="op-rec"><span class="op-rec-title">' + b.label + '</span>' +
-        '<span class="op-rec-detail">' + esc(b.fn(g[b.key])) + '</span></div>';
+        '<span class="op-rec-detail">' + esc(b.fn(g[b.key], a)) + '</span></div>';
     }).join('');
     if (!body) body = '<p class="op-clean">No actions needed in the completed sections.</p>';
     if (s.trimmed > 0) {
@@ -391,6 +405,44 @@ HARP.ui.report = (function () {
       '<div class="op-alloc-legend">' + legend + '</div></div>';
   }
 
+  // The tax analog of the alignment band: the calculator's before/after tax story + the strategies that
+  // close the gap. Only shown when the tax lane populated a plan (gap-tolerant otherwise).
+  function taxStory(a) {
+    var t = a.tax || {};
+    if (!t.hasPlan) return '';
+    var cur = (typeof t.currentTax === 'number') ? t.currentTax : null;
+    var aft = (typeof t.afterTax === 'number') ? t.afterTax : null;
+    var sav = Number(t.savings) || 0;
+    var fig = function (n) { return n == null ? '—' : money(n); };
+    var ef = function (n) { return (typeof n === 'number') ? '<div class="op-tax-sub">' + pct(n) + ' effective</div>' : ''; };
+    var ba = '';
+    if (cur != null || aft != null) {
+      ba = '<div class="op-tax-ba">' +
+        '<div class="op-tax-col"><div class="op-tax-lbl">Current projected tax</div>' +
+          '<div class="op-tax-fig">' + fig(cur) + '</div>' + ef(t.effectiveRatePct) + '</div>' +
+        '<div class="op-tax-arrow">' + (sav > 0 ? '<span class="op-tax-save">saves ' + money(sav) + '/yr</span>' : '→') + '</div>' +
+        '<div class="op-tax-col after"><div class="op-tax-lbl">After strategies</div>' +
+          '<div class="op-tax-fig">' + fig(aft) + '</div>' + ef(t.effectiveRateAfterPct) + '</div>' +
+      '</div>';
+    }
+    // Interested strategies first, then by savings size.
+    var strat = (t.strategies || []).slice().sort(function (x, y) {
+      var rk = function (s) { return s.status === 'interested' ? 0 : 1; };
+      if (rk(x) !== rk(y)) return rk(x) - rk(y);
+      return (Number(y.netAnnualSavings) || 0) - (Number(x.netAnnualSavings) || 0);
+    });
+    var stratHtml = strat.length
+      ? '<div class="op-tax-strats"><div class="op-tax-strats-h">Strategies identified</div>' +
+        strat.map(function (s) {
+          return '<div class="op-tax-strat"><span class="op-tax-strat-name">' + esc(s.name) + '</span>' +
+            (s.netAnnualSavings != null ? '<span class="op-tax-strat-save">' + money(s.netAnnualSavings) + '/yr</span>' : '') +
+            '</div>';
+        }).join('') + '</div>'
+      : '';
+    return '<div class="op-tax"><h3 class="op-tax-h">Tax planning ' +
+      '<span class="op-tax-src">from the BrookHaven Tax Strategy Calculator</span></h3>' + ba + stratHtml + '</div>';
+  }
+
   function render(a) {
     var filled = filledByCategory(a);
     var byKey = {};
@@ -413,6 +465,7 @@ HARP.ui.report = (function () {
         snapshotStrip(a) +
         scores(a, cats, filled, overall) +
         allocationBand(a) +
+        taxStory(a) +
         keyRisks(a, filled) +
         recommendations(a, filled) +
       '</td></tr></tbody>' +

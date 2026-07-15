@@ -231,15 +231,39 @@ HARP.ui.forms = (function () {
     save();
   }
 
-  // Tax section is ingest-driven (from the Nitrogen tax snapshot). Fill only the values present; the
-  // fields stay editable so an advisor can adjust or supply them until the tax lane populates them.
+  // Tax section is ingest-driven (from the BrookHaven Tax Strategy Calculator lane). Fill only the values
+  // present; the fields stay editable so an advisor can adjust or supply them. The full tax PLAN (savings,
+  // effective rates, strategies) rides along in a hidden JSON field and is what js/engine/tax.js scores —
+  // the calculator is the source of truth, exactly as Nitrogen is for the portfolio.
   function fillTax(tax) {
     tax = tax || {};
     if (tax.filingStatus) setVal('filingStatus', tax.filingStatus);
     if (tax.income != null && tax.income !== '') setVal('income', tax.income);
     if (tax.agi != null && tax.agi !== '') setVal('agi', tax.agi);
+    if (tax.totalTax != null && tax.totalTax !== '') setVal('totalTax', tax.totalTax);
+    if (tax.dependents != null && tax.dependents !== '') setVal('dependents', tax.dependents);
+    if (tax.plan) setVal('tax-plan', JSON.stringify(tax.plan));
+    renderTaxSummary();
+    updateInsuranceCrossfill();
     formatDollarInputs();
     save();
+  }
+  function readTaxPlan() { try { var v = val('tax-plan'); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  // Read-only echo of the calculator's numbers so the advisor can eyeball what was ingested (mirrors the
+  // portfolio value/income computed rows). No score here — just the source figures.
+  function renderTaxSummary() {
+    var el = $('tax-summary'); if (!el) return;
+    var p = readTaxPlan();
+    if (!p || (p.currentTax == null && p.savings == null && p.effectiveRatePct == null)) { el.innerHTML = ''; el.hidden = true; return; }
+    var money = HARP.util.money, rows = [];
+    if (p.currentTax != null) rows.push(['Current projected tax', money(p.currentTax)]);
+    if (p.savings != null) rows.push(['Identified annual savings', money(p.savings)]);
+    if (p.afterTax != null) rows.push(['Tax after strategies', money(p.afterTax)]);
+    if (p.effectiveRatePct != null) rows.push(['Effective rate', p.effectiveRatePct + '%']);
+    if (Array.isArray(p.strategies) && p.strategies.length) rows.push(['Strategies', p.strategies.length + ' identified']);
+    el.hidden = false;
+    el.innerHTML = '<div class="computed-note">From the tax calculator — verify:</div>' +
+      rows.map(function (r) { return '<div class="computed-row"><span class="computed-label">' + esc(r[0]) + '</span><span class="computed-val">' + esc(r[1]) + '</span></div>'; }).join('');
   }
 
   // Primary goal drives which follow-up fields show: Growth -> last-year return; Income -> income vs draw.
@@ -298,8 +322,22 @@ HARP.ui.forms = (function () {
     var b = $('ins-business-followup');
     if (b) b.hidden = !nameBool('ins-hasBusiness');
   }
+  // Cross-fill banner: the tax section already carries household income (and dependents / filing status),
+  // so the insurance need is sized from those instead of re-asking. Shown only once tax data is present.
+  function updateInsuranceCrossfill() {
+    var el = $('ins-crossfill'); if (!el) return;
+    var inc = num('income'), deps = int('dependents'), fs = val('filingStatus');
+    var bits = [];
+    if (inc > 0) bits.push('income ' + HARP.util.money(inc));
+    if (deps > 0) bits.push(deps + ' dependent' + (deps === 1 ? '' : 's'));
+    if (fs) bits.push(fs.toLowerCase());
+    if (!bits.length) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
+    el.innerHTML = 'Using ' + bits.join(', ') + ' from the tax section to size coverage — no need to re-enter.';
+  }
   function buildInsuranceInputs() {
     $('insurance-inputs').innerHTML =
+      '<div class="crossfill-note" id="ins-crossfill" hidden></div>' +
       yesNoToggle('ins-hasPolicies', 'Do you have a personal / family insurance policy?') +
       '<div class="q-followup" id="ins-policies-followup" hidden>' +
         '<label>Total payout value across all policies ($)' +
@@ -462,8 +500,8 @@ HARP.ui.forms = (function () {
     if (!form) return;
     form.addEventListener('input', scheduleSave);
     form.addEventListener('change', scheduleSave);
-    form.addEventListener('input', function () { updatePortfolioTotal(); syncFixedIncomeCascade(); });
-    form.addEventListener('change', function (e) { if (e.target && e.target.name === 'goal') syncGoalCascade(); });
+    form.addEventListener('input', function () { updatePortfolioTotal(); syncFixedIncomeCascade(); updateInsuranceCrossfill(); });
+    form.addEventListener('change', function (e) { if (e.target && e.target.name === 'goal') syncGoalCascade(); updateInsuranceCrossfill(); });
     // Re-format dollar fields with commas when the user leaves the field.
     form.addEventListener('focusout', function (e) {
       if (e.target && e.target.classList && e.target.classList.contains('dollar')) e.target.value = commaFmt(e.target.value);
@@ -499,6 +537,8 @@ HARP.ui.forms = (function () {
       agi: num('agi'),
       totalTax: num('totalTax'),
       dependents: int('dependents'),
+      taxPlan: readTaxPlan(),          // full tax-calculator story (savings/rates/strategies) — scored by tax.js
+      taxState: (function () { var p = readTaxPlan(); return p && p.state ? p.state : ''; })(),
       taxable: taxBucket('taxable'),
       taxDeferred: taxBucket('traditional'),
       taxFree: taxBucket('roth'),
@@ -520,6 +560,8 @@ HARP.ui.forms = (function () {
   function loadProfile(p) {
     setVal('name', p.name); setVal('filingStatus', p.filingStatus);
     setVal('income', p.income); setVal('agi', p.agi); setVal('totalTax', p.totalTax); setVal('dependents', p.dependents);
+    setVal('tax-plan', p.taxPlan ? JSON.stringify(p.taxPlan) : '');
+    renderTaxSummary();
     setVal('fixedIncomeAccount', p.fixedIncomeAccount || 'taxable');
     setGoal(p.goal);
     setVal('age', p.age);
@@ -540,6 +582,7 @@ HARP.ui.forms = (function () {
     syncGoalCascade();
     syncFixedIncomeCascade();
     updatePortfolioTotal();
+    updateInsuranceCrossfill();
     save();
   }
   function reset() {
@@ -566,6 +609,7 @@ HARP.ui.forms = (function () {
     syncGoalCascade();
     syncFixedIncomeCascade();
     updatePortfolioTotal();
+    updateInsuranceCrossfill();
   }
 
   return {

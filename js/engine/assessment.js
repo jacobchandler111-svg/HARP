@@ -10,7 +10,7 @@ HARP.assessment = (function () {
     { key: 'investments', label: 'Investments', match: ['Investment risk alignment', 'Investment quality', 'Investment cost', 'Investment performance', 'Investment income'] },
     { key: 'retirement',  label: 'Retirement',  match: ['Retirement'] },
     { key: 'insurance',   label: 'Insurance',   match: ['Insurance'] },
-    { key: 'tax',         label: 'Tax',         match: ['Tax diversification', 'Accounting / tax'] },
+    { key: 'tax',         label: 'Tax',         match: ['Tax planning', 'Accounting / tax', 'Tax diversification'] },
     { key: 'legal',       label: 'Legal',       match: ['Legal / estate'] }
   ];
 
@@ -28,10 +28,12 @@ HARP.assessment = (function () {
     var tax = HARP.tax.analyze(profile, cfg);
     var legal = HARP.legal.analyze(profile, cfg);
 
-    // Investments findings come from the Riskalyze-driven risk module only. concentration + embedded-gains
-    // (HARP's own holdings calculators) are intentionally EXCLUDED — the portfolio is Riskalyze's job now.
+    // Investments findings come from the Riskalyze-driven risk module only (concentration + embedded-gains
+    // EXCLUDED — the portfolio is Riskalyze's job now). Tax findings come from the tax-calculator-driven tax
+    // module only: accounting.js (HARP re-deriving tax from a 1040) is kept ONLY for its computed income
+    // passthrough — its findings are EXCLUDED too, so the tax story is the calculator's, not HARP's.
     var findings = [].concat(
-      accounting.findings, risk.findings, retirement.findings, performance.findings, income.findings, insurance.findings, tax.findings, legal.findings
+      risk.findings, retirement.findings, performance.findings, income.findings, insurance.findings, tax.findings, legal.findings
     );
 
     var counts = countSeverities(findings);
@@ -51,7 +53,9 @@ HARP.assessment = (function () {
       findings: findings,
       counts: counts,
       score: scoreFromFindings(findings, cfg),
-      categories: categoryScores(findings, cfg, { insurance: insurance.categoryScore })
+      // Insurance and Tax supply their category score directly (a rubric / savings-ratio), bypassing the
+      // generic finding-count scoring — only when they actually have data to assess.
+      categories: categoryScores(findings, cfg, taxOverride(tax, { insurance: insurance.categoryScore }))
     };
   }
 
@@ -59,6 +63,13 @@ HARP.assessment = (function () {
     var counts = { risk: 0, warn: 0, ok: 0, info: 0 };
     findings.forEach(function (f) { counts[f.severity] = (counts[f.severity] || 0) + 1; });
     return counts;
+  }
+
+  // Add the tax module's own category score to the overrides only when it has a plan to assess; without one
+  // the Tax dial stays "information needed" (gap-tolerant) instead of being scored on no data.
+  function taxOverride(tax, overrides) {
+    if (tax && tax.hasPlan && tax.categoryScore != null) overrides.tax = tax.categoryScore;
+    return overrides;
   }
 
   // `overrides` lets a module supply a category's score directly (e.g. insurance's (C,M) rubric), bypassing
